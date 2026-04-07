@@ -1,10 +1,13 @@
+import { fileURLToPath } from "node:url";
 import * as core from "@actions/core";
 import * as github from "@actions/github";
+import { resolveChecksums } from "./checksum/index.js";
 import { readInputs } from "./config/input.js";
 import { validateInputs } from "./config/validate.js";
 import { BrewUpError, formatErrorMessage } from "./errors.js";
 import { resolveArtifacts } from "./github/assets.js";
 import { resolveRelease } from "./github/release.js";
+import { renderTemplate } from "./template/render.js";
 
 function getGitHubToken(): string {
   const token = process.env.GITHUB_TOKEN?.trim();
@@ -55,22 +58,33 @@ export async function run(): Promise<void> {
       release.assets,
       variables,
     );
+    const checksummed = await resolveChecksums({
+      checksumAsset: config.checksumAsset,
+      release,
+      resolvedArtifacts: resolved,
+    });
+    const renderedOutput = await renderTemplate(
+      config.templatePath,
+      variables,
+      checksummed,
+    );
 
     core.info(`Resolved release: id=${release.id}, tag=${release.tagName}`);
     core.info(
-      `Resolved artifact keys: ${Object.keys(resolved.artifacts).join(", ")}`,
+      `Resolved artifact keys: ${Object.keys(checksummed.artifacts).join(", ")}`,
     );
+    core.info(`Rendered output bytes: ${Buffer.byteLength(renderedOutput, "utf8")}`);
 
     core.setOutput("resolved-release-id", String(release.id));
     core.setOutput("resolved-release-tag", release.tagName);
-
-    throw new BrewUpError(
-      "UNIMPLEMENTED_MILESTONE",
-      "Milestone 1 complete: checksum, template rendering, and publish phases are not implemented yet.",
+    core.info(
+      "Milestone 2 complete: checksum resolution and template rendering finished. Publish flow starts in Milestone 3.",
     );
   } catch (error) {
     core.setFailed(formatErrorMessage(error));
   }
 }
 
-void run();
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  void run();
+}

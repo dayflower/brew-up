@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
-    "@actions/github": "^9.0.0"
+    "@actions/github": "^9.0.0",
+    "@types/mustache": "^4.2.6",
+    "mustache": "^4.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",

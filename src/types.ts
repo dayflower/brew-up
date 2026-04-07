@@ -73,6 +73,7 @@ export interface ResolvedArtifact {
   name: string;
   url: string;
   apiUrl: string;
+  sha256?: string;
 }
 
 export interface ResolvedArtifacts {
