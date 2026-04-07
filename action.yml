@@ -1,0 +1,50 @@
+name: 'Homebrew Tap Update'
+description: 'Generate and publish Homebrew tap files from release assets'
+inputs:
+  release-id:
+    description: 'Release ID to resolve in source repository'
+    required: false
+  release-tag:
+    description: 'Release tag to resolve in source repository'
+    required: false
+  template-path:
+    description: 'Template file path in repository A'
+    required: true
+  output-path:
+    description: 'Output file path in repository B'
+    required: true
+  asset-map:
+    description: 'Newline-delimited key=value map for release assets'
+    required: true
+  checksum-asset:
+    description: 'Optional checksum asset filename'
+    required: false
+  target-repo:
+    description: 'Target repository in owner/name format'
+    required: true
+  target-branch:
+    description: 'Target branch in repository B'
+    required: true
+  target-repo-token:
+    description: 'Token used to access repository B'
+    required: true
+  publish-mode:
+    description: 'Publish mode: direct, pr, or pr-auto-merge'
+    required: true
+  only-if-changed:
+    description: 'Skip publish when output is unchanged'
+    required: false
+    default: 'true'
+  dry-run:
+    description: 'Run without mutating repository B'
+    required: false
+    default: 'false'
+  commit-author-name:
+    description: 'Optional commit author name (must pair with email)'
+    required: false
+  commit-author-email:
+    description: 'Optional commit author email (must pair with name)'
+    required: false
+runs:
+  using: 'node24'
+  main: 'lib/main.js'
