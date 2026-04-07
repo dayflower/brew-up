@@ -1,12 +1,12 @@
 export type ErrorCode =
-  | 'INVALID_INPUT'
-  | 'UNSUPPORTED_MODE'
-  | 'INVALID_ASSET_MAP'
-  | 'RELEASE_NOT_RESOLVED'
-  | 'RELEASE_LOOKUP_FAILED'
-  | 'ASSET_NOT_FOUND'
-  | 'ASSET_AMBIGUOUS'
-  | 'UNIMPLEMENTED_MILESTONE';
+  | "INVALID_INPUT"
+  | "UNSUPPORTED_MODE"
+  | "INVALID_ASSET_MAP"
+  | "RELEASE_NOT_RESOLVED"
+  | "RELEASE_LOOKUP_FAILED"
+  | "ASSET_NOT_FOUND"
+  | "ASSET_AMBIGUOUS"
+  | "UNIMPLEMENTED_MILESTONE";
 
 export class BrewUpError extends Error {
   readonly code: ErrorCode;
@@ -14,7 +14,7 @@ export class BrewUpError extends Error {
 
   constructor(code: ErrorCode, message: string, hint?: string) {
     super(message);
-    this.name = 'BrewUpError';
+    this.name = "BrewUpError";
     this.code = code;
     this.hint = hint;
   }
@@ -22,7 +22,7 @@ export class BrewUpError extends Error {
 
 export function formatErrorMessage(error: unknown): string {
   if (error instanceof BrewUpError) {
-    const hintSuffix = error.hint ? ` Hint: ${error.hint}` : '';
+    const hintSuffix = error.hint ? ` Hint: ${error.hint}` : "";
     return `[${error.code}] ${error.message}${hintSuffix}`;
   }
 

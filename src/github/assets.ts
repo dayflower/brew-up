@@ -1,25 +1,25 @@
-import { BrewUpError } from '../errors';
+import { BrewUpError } from "../errors";
 import type {
   AssetMapEntry,
   ReleaseAsset,
   ReleaseTemplateVariables,
   ResolvedArtifact,
-  ResolvedArtifacts
-} from '../types';
+  ResolvedArtifacts,
+} from "../types";
 
 const TEMPLATE_VAR_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
 function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function patternToRegExp(pattern: string): RegExp {
-  const escaped = escapeRegExp(pattern).replace(/\\\*/g, '.*');
+  const escaped = escapeRegExp(pattern).replace(/\\\*/g, ".*");
   return new RegExp(`^${escaped}$`);
 }
 
 function matchAsset(pattern: string, assets: ReleaseAsset[]): ReleaseAsset[] {
-  if (!pattern.includes('*')) {
+  if (!pattern.includes("*")) {
     return assets.filter((asset) => asset.name === pattern);
   }
 
@@ -34,19 +34,22 @@ export function parseAssetMap(input: string): AssetMapEntry[] {
     .filter((line) => line.length > 0);
 
   if (lines.length === 0) {
-    throw new BrewUpError('INVALID_ASSET_MAP', 'Input asset-map must not be empty.');
+    throw new BrewUpError(
+      "INVALID_ASSET_MAP",
+      "Input asset-map must not be empty.",
+    );
   }
 
   const entries: AssetMapEntry[] = [];
   const seenKeys = new Set<string>();
 
   for (const line of lines) {
-    const separatorIndex = line.indexOf('=');
+    const separatorIndex = line.indexOf("=");
     if (separatorIndex <= 0 || separatorIndex === line.length - 1) {
       throw new BrewUpError(
-        'INVALID_ASSET_MAP',
+        "INVALID_ASSET_MAP",
         `Invalid asset-map line: "${line}".`,
-        'Each line must follow key=value and both key and value must be non-empty.'
+        "Each line must follow key=value and both key and value must be non-empty.",
       );
     }
 
@@ -55,14 +58,17 @@ export function parseAssetMap(input: string): AssetMapEntry[] {
 
     if (key.length === 0 || pattern.length === 0) {
       throw new BrewUpError(
-        'INVALID_ASSET_MAP',
+        "INVALID_ASSET_MAP",
         `Invalid asset-map line: "${line}".`,
-        'Each line must follow key=value and both key and value must be non-empty.'
+        "Each line must follow key=value and both key and value must be non-empty.",
       );
     }
 
     if (seenKeys.has(key)) {
-      throw new BrewUpError('INVALID_ASSET_MAP', `Duplicate asset-map key: "${key}".`);
+      throw new BrewUpError(
+        "INVALID_ASSET_MAP",
+        `Duplicate asset-map key: "${key}".`,
+      );
     }
 
     seenKeys.add(key);
@@ -74,25 +80,28 @@ export function parseAssetMap(input: string): AssetMapEntry[] {
 
 export function expandAssetPattern(
   pattern: string,
-  variables: ReleaseTemplateVariables
+  variables: ReleaseTemplateVariables,
 ): string {
-  return pattern.replace(TEMPLATE_VAR_PATTERN, (_match, variableName: string) => {
-    const key = variableName as keyof ReleaseTemplateVariables;
-    if (!(key in variables)) {
-      throw new BrewUpError(
-        'INVALID_ASSET_MAP',
-        `asset-map references unknown variable "${variableName}".`
-      );
-    }
+  return pattern.replace(
+    TEMPLATE_VAR_PATTERN,
+    (_match, variableName: string) => {
+      const key = variableName as keyof ReleaseTemplateVariables;
+      if (!(key in variables)) {
+        throw new BrewUpError(
+          "INVALID_ASSET_MAP",
+          `asset-map references unknown variable "${variableName}".`,
+        );
+      }
 
-    return variables[key];
-  });
+      return variables[key];
+    },
+  );
 }
 
 export function resolveArtifacts(
   entries: AssetMapEntry[],
   assets: ReleaseAsset[],
-  variables: ReleaseTemplateVariables
+  variables: ReleaseTemplateVariables,
 ): ResolvedArtifacts {
   const artifacts: Record<string, ResolvedArtifact> = {};
 
@@ -102,18 +111,18 @@ export function resolveArtifacts(
 
     if (matches.length === 0) {
       throw new BrewUpError(
-        'ASSET_NOT_FOUND',
+        "ASSET_NOT_FOUND",
         `Asset key "${entry.key}" matched no release assets.`,
-        `Expanded pattern: "${expandedPattern}"`
+        `Expanded pattern: "${expandedPattern}"`,
       );
     }
 
     if (matches.length > 1) {
-      const names = matches.map((asset) => asset.name).join(', ');
+      const names = matches.map((asset) => asset.name).join(", ");
       throw new BrewUpError(
-        'ASSET_AMBIGUOUS',
+        "ASSET_AMBIGUOUS",
         `Asset key "${entry.key}" matched multiple assets.`,
-        `Expanded pattern: "${expandedPattern}", matches: ${names}`
+        `Expanded pattern: "${expandedPattern}", matches: ${names}`,
       );
     }
 
@@ -122,7 +131,7 @@ export function resolveArtifacts(
       key: entry.key,
       name: asset.name,
       url: asset.browserDownloadUrl,
-      apiUrl: asset.apiUrl
+      apiUrl: asset.apiUrl,
     };
   }
 
@@ -130,7 +139,7 @@ export function resolveArtifacts(
   if (values.length === 1) {
     return {
       artifacts,
-      artifact: values[0]
+      artifact: values[0],
     };
   }
 

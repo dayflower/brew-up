@@ -1,4 +1,4 @@
-export type PublishMode = 'direct' | 'pr' | 'pr-auto-merge';
+export type PublishMode = "direct" | "pr" | "pr-auto-merge";
 
 export interface RawInputs {
   releaseId: string;

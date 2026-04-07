@@ -1,10 +1,10 @@
-import { BrewUpError } from '../errors';
+import { BrewUpError } from "../errors";
 import type {
   ReleaseAsset,
   ResolvedRelease,
   SourceReleaseContext,
-  ValidatedInputs
-} from '../types';
+  ValidatedInputs,
+} from "../types";
 
 interface ReleaseApiAsset {
   id: number;
@@ -43,7 +43,7 @@ function toReleaseAsset(asset: ReleaseApiAsset): ReleaseAsset {
     id: asset.id,
     name: asset.name,
     browserDownloadUrl: asset.browser_download_url,
-    apiUrl: asset.url
+    apiUrl: asset.url,
   };
 }
 
@@ -54,8 +54,8 @@ function toResolvedRelease(release: ReleaseApiResponse): ResolvedRelease {
     tagName,
     name: release.name ?? tagName,
     url: release.html_url,
-    version: tagName.startsWith('v') ? tagName.slice(1) : tagName,
-    assets: release.assets.map(toReleaseAsset)
+    version: tagName.startsWith("v") ? tagName.slice(1) : tagName,
+    assets: release.assets.map(toReleaseAsset),
   };
 }
 
@@ -63,20 +63,20 @@ async function resolveById(
   client: ReleaseApiClient,
   owner: string,
   repo: string,
-  releaseId: number
+  releaseId: number,
 ): Promise<ResolvedRelease> {
   try {
     const response = await client.rest.repos.getRelease({
       owner,
       repo,
-      release_id: releaseId
+      release_id: releaseId,
     });
     return toResolvedRelease(response.data);
   } catch (error) {
     throw new BrewUpError(
-      'RELEASE_LOOKUP_FAILED',
+      "RELEASE_LOOKUP_FAILED",
       `Failed to resolve release by id: ${releaseId}.`,
-      error instanceof Error ? error.message : undefined
+      error instanceof Error ? error.message : undefined,
     );
   }
 }
@@ -85,20 +85,20 @@ async function resolveByTag(
   client: ReleaseApiClient,
   owner: string,
   repo: string,
-  tag: string
+  tag: string,
 ): Promise<ResolvedRelease> {
   try {
     const response = await client.rest.repos.getReleaseByTag({
       owner,
       repo,
-      tag
+      tag,
     });
     return toResolvedRelease(response.data);
   } catch (error) {
     throw new BrewUpError(
-      'RELEASE_LOOKUP_FAILED',
+      "RELEASE_LOOKUP_FAILED",
       `Failed to resolve release by tag: ${tag}.`,
-      error instanceof Error ? error.message : undefined
+      error instanceof Error ? error.message : undefined,
     );
   }
 }
@@ -106,7 +106,7 @@ async function resolveByTag(
 export async function resolveRelease(
   client: ReleaseApiClient,
   source: SourceReleaseContext,
-  config: Pick<ValidatedInputs, 'releaseId' | 'releaseTag'>
+  config: Pick<ValidatedInputs, "releaseId" | "releaseTag">,
 ): Promise<ResolvedRelease> {
   const owner = source.owner;
   const repo = source.repo;
@@ -128,8 +128,8 @@ export async function resolveRelease(
   }
 
   throw new BrewUpError(
-    'RELEASE_NOT_RESOLVED',
-    'Release could not be resolved from inputs or event payload.',
-    'Tried release-id, release-tag, github.event.release.id, github.event.release.tag_name.'
+    "RELEASE_NOT_RESOLVED",
+    "Release could not be resolved from inputs or event payload.",
+    "Tried release-id, release-tag, github.event.release.id, github.event.release.tag_name.",
   );
 }
