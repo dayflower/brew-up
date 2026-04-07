@@ -1,10 +1,10 @@
-import { BrewUpError } from "../errors";
+import { BrewUpError } from "../errors.js";
 import type {
   ReleaseAsset,
   ResolvedRelease,
   SourceReleaseContext,
   ValidatedInputs,
-} from "../types";
+} from "../types.js";
 
 interface ReleaseApiAsset {
   id: number;

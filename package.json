@@ -2,6 +2,7 @@
   "name": "brew-up",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "GitHub Action to update Homebrew tap files from release assets",
   "main": "lib/main.js",
   "scripts": {
@@ -14,13 +15,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@actions/core": "^1.11.1",
-    "@actions/github": "^6.0.1"
+    "@actions/core": "^3.0.0",
+    "@actions/github": "^9.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
     "@types/node": "^24.0.0",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }

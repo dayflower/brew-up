@@ -1,4 +1,4 @@
-import type { RawInputs } from "../types";
+import type { RawInputs } from "../types.js";
 
 function readInput(
   getInput: (name: string, options?: { required?: boolean }) => string,

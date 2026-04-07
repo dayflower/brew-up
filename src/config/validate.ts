@@ -1,6 +1,6 @@
-import { BrewUpError } from "../errors";
-import { parseAssetMap } from "../github/assets";
-import type { PublishMode, RawInputs, ValidatedInputs } from "../types";
+import { BrewUpError } from "../errors.js";
+import { parseAssetMap } from "../github/assets.js";
+import type { PublishMode, RawInputs, ValidatedInputs } from "../types.js";
 
 const VALID_PUBLISH_MODES = new Set<PublishMode>([
   "direct",

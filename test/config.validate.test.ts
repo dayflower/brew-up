@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { validateInputs } from "../src/config/validate";
-import type { RawInputs } from "../src/types";
+import { validateInputs } from "../src/config/validate.js";
+import type { RawInputs } from "../src/types.js";
 
 function baseRawInputs(): RawInputs {
   return {

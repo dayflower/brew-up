@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolveRelease } from "../src/github/release";
+import { resolveRelease } from "../src/github/release.js";
 
 function makeClient() {
   return {

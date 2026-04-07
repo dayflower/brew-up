@@ -1,11 +1,11 @@
-import { BrewUpError } from "../errors";
+import { BrewUpError } from "../errors.js";
 import type {
   AssetMapEntry,
   ReleaseAsset,
   ReleaseTemplateVariables,
   ResolvedArtifact,
   ResolvedArtifacts,
-} from "../types";
+} from "../types.js";
 
 const TEMPLATE_VAR_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 

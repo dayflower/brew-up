@@ -1,10 +1,10 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { readInputs } from "./config/input";
-import { validateInputs } from "./config/validate";
-import { BrewUpError, formatErrorMessage } from "./errors";
-import { resolveArtifacts } from "./github/assets";
-import { resolveRelease } from "./github/release";
+import { readInputs } from "./config/input.js";
+import { validateInputs } from "./config/validate.js";
+import { BrewUpError, formatErrorMessage } from "./errors.js";
+import { resolveArtifacts } from "./github/assets.js";
+import { resolveRelease } from "./github/release.js";
 
 function getGitHubToken(): string {
   const token = process.env.GITHUB_TOKEN?.trim();

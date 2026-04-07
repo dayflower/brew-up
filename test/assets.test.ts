@@ -3,8 +3,8 @@ import {
   expandAssetPattern,
   parseAssetMap,
   resolveArtifacts,
-} from "../src/github/assets";
-import type { ReleaseAsset, ReleaseTemplateVariables } from "../src/types";
+} from "../src/github/assets.js";
+import type { ReleaseAsset, ReleaseTemplateVariables } from "../src/types.js";
 
 const variables: ReleaseTemplateVariables = {
   version: "1.2.3",
