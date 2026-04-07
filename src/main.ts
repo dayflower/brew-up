@@ -8,6 +8,8 @@ import { BrewUpError, formatErrorMessage } from "./errors.js";
 import { resolveArtifacts } from "./github/assets.js";
 import { resolveRelease } from "./github/release.js";
 import { renderTemplate } from "./template/render.js";
+import { detectChange } from "./target/change.js";
+import { publishDirect } from "./target/publish-direct.js";
 
 function getGitHubToken(): string {
   const token = process.env.GITHUB_TOKEN?.trim();
@@ -75,11 +77,37 @@ export async function run(): Promise<void> {
     );
     core.info(`Rendered output bytes: ${Buffer.byteLength(renderedOutput, "utf8")}`);
 
+    const targetOctokit = github.getOctokit(config.targetRepoToken);
+    const change = await detectChange(targetOctokit, config, renderedOutput);
+
+    core.setOutput("changed", String(change.changed));
     core.setOutput("resolved-release-id", String(release.id));
     core.setOutput("resolved-release-tag", release.tagName);
-    core.info(
-      "Milestone 2 complete: checksum resolution and template rendering finished. Publish flow starts in Milestone 3.",
-    );
+
+    if (!change.changed) {
+      core.info("No output change detected; skipping publish.");
+      return;
+    }
+
+    if (config.dryRun) {
+      core.info("Dry run enabled; skipping publish.");
+      return;
+    }
+
+    if (config.publishMode !== "direct") {
+      throw new BrewUpError(
+        "UNIMPLEMENTED_MILESTONE",
+        `Publish mode "${config.publishMode}" is not available until Milestone 4.`,
+      );
+    }
+
+    const published = await publishDirect(targetOctokit, config, renderedOutput, {
+      currentSha: change.currentSha,
+      releaseTag: release.tagName,
+    });
+
+    core.setOutput("target-commit-sha", published.commitSha);
+    core.info(`Published output commit: ${published.commitSha}`);
   } catch (error) {
     core.setFailed(formatErrorMessage(error));
   }

@@ -88,3 +88,12 @@ export interface ReleaseTemplateVariables {
   release_name: string;
   release_url: string;
 }
+
+export interface ChangeDetectionResult {
+  changed: boolean;
+  currentSha?: string;
+}
+
+export interface PublishDirectResult {
+  commitSha: string;
+}
