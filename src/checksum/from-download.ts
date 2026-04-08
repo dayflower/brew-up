@@ -1,16 +1,12 @@
 import { createHash } from "node:crypto";
-import { BrewUpError } from "../errors.js";
 import type { ResolvedArtifacts } from "../types.js";
+import { fetchWithRetry } from "./fetch-retry.js";
 
-async function calculateSha256FromUrl(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new BrewUpError(
-      "CHECKSUM_FETCH_FAILED",
-      `Failed to download artifact from "${url}" for checksum calculation.`,
-      `HTTP status: ${response.status}`,
-    );
-  }
+async function calculateSha256FromUrl(name: string, url: string): Promise<string> {
+  const response = await fetchWithRetry(
+    url,
+    `artifact "${name}" from "${url}" for checksum calculation`,
+  );
 
   const buffer = Buffer.from(await response.arrayBuffer());
   const hash = createHash("sha256");
@@ -27,7 +23,7 @@ export async function resolveChecksumsFromDownload(
         key,
         {
           ...artifact,
-          sha256: await calculateSha256FromUrl(artifact.url),
+          sha256: await calculateSha256FromUrl(artifact.name, artifact.url),
         },
       ]),
     ),

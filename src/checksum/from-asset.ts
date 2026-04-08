@@ -1,6 +1,7 @@
 import path from "node:path";
 import { BrewUpError } from "../errors.js";
 import type { ResolvedArtifacts, ReleaseAsset } from "../types.js";
+import { fetchWithRetry } from "./fetch-retry.js";
 
 interface ChecksumAssetEntry {
   fileName: string;
@@ -87,14 +88,10 @@ function resolveChecksumForArtifact(
 async function fetchChecksumAssetText(
   checksumAsset: ReleaseAsset,
 ): Promise<string> {
-  const response = await fetch(checksumAsset.browserDownloadUrl);
-  if (!response.ok) {
-    throw new BrewUpError(
-      "CHECKSUM_FETCH_FAILED",
-      `Failed to download checksum asset "${checksumAsset.name}".`,
-      `HTTP status: ${response.status}`,
-    );
-  }
+  const response = await fetchWithRetry(
+    checksumAsset.browserDownloadUrl,
+    `checksum asset "${checksumAsset.name}" from "${checksumAsset.browserDownloadUrl}"`,
+  );
 
   return response.text();
 }

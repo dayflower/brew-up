@@ -22,6 +22,7 @@ const resolvedArtifacts: ResolvedArtifacts = {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe("resolveChecksumsFromDownload", () => {
@@ -46,5 +47,23 @@ describe("resolveChecksumsFromDownload", () => {
     await expect(resolveChecksumsFromDownload(resolvedArtifacts)).rejects.toThrow(
       /Failed to download artifact/,
     );
+  });
+
+  it("retries transient failures and then succeeds", async () => {
+    vi.useFakeTimers();
+    const data = Buffer.from("retry-success");
+    const expectedHash = createHash("sha256").update(data).digest("hex");
+
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response("busy", { status: 503 }))
+      .mockResolvedValueOnce(new Response("busy", { status: 503 }))
+      .mockResolvedValueOnce(new Response(data, { status: 200 }));
+
+    const pending = resolveChecksumsFromDownload(resolvedArtifacts);
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    const result = await pending;
+    expect(result.artifacts.default.sha256).toBe(expectedHash);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,0 +1,88 @@
+name: e2e-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-id:
+        description: "Optional release ID"
+        required: false
+        type: string
+      release-tag:
+        description: "Optional release tag"
+        required: false
+        type: string
+      template-path:
+        description: "Template path in repository A"
+        required: true
+        type: string
+      output-path:
+        description: "Output path in repository B"
+        required: true
+        type: string
+      asset-map:
+        description: "Newline-delimited key=pattern"
+        required: true
+        type: string
+      checksum-asset:
+        description: "Optional checksum asset name"
+        required: false
+        type: string
+      target-repo:
+        description: "Target repository owner/name"
+        required: true
+        type: string
+      target-branch:
+        description: "Target branch"
+        required: true
+        default: "main"
+        type: string
+      publish-mode:
+        description: "direct, pr, or pr-auto-merge"
+        required: true
+        default: "pr"
+        type: choice
+        options:
+          - direct
+          - pr
+          - pr-auto-merge
+      only-if-changed:
+        description: "Skip when output is unchanged"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      dry-run:
+        description: "Resolve/render only"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+
+      - name: Run brew-up e2e smoke
+        uses: ./
+        with:
+          release-id: ${{ inputs.release-id }}
+          release-tag: ${{ inputs.release-tag }}
+          template-path: ${{ inputs.template-path }}
+          output-path: ${{ inputs.output-path }}
+          asset-map: ${{ inputs.asset-map }}
+          checksum-asset: ${{ inputs.checksum-asset }}
+          target-repo: ${{ inputs.target-repo }}
+          target-branch: ${{ inputs.target-branch }}
+          target-repo-token: ${{ secrets.BREW_UP_TARGET_REPO_TOKEN }}
+          publish-mode: ${{ inputs.publish-mode }}
+          only-if-changed: ${{ inputs.only-if-changed }}
+          dry-run: ${{ inputs.dry-run }}

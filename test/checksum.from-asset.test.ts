@@ -39,6 +39,7 @@ const resolvedArtifacts: ResolvedArtifacts = {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe("resolveChecksumsFromAsset", () => {
@@ -100,5 +101,23 @@ describe("resolveChecksumsFromAsset", () => {
     await expect(
       resolveChecksumsFromAsset("checksums.txt", releaseAssets, resolvedArtifacts),
     ).rejects.toThrow(/Invalid checksum line format/);
+  });
+
+  it("retries transient checksum asset download failures", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response("busy", { status: 503 }))
+      .mockResolvedValueOnce(new Response(`${SHA_A}  app.zip\n`, { status: 200 }));
+
+    const pending = resolveChecksumsFromAsset(
+      "checksums.txt",
+      releaseAssets,
+      resolvedArtifacts,
+    );
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    const result = await pending;
+    expect(result.artifacts.default.sha256).toBe(SHA_A);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 });
