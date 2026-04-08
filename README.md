@@ -1,30 +1,30 @@
 # brew-up
 
-`brew-up` is a JavaScript GitHub Action that renders one file from a template in repository A and publishes it to repository B (Homebrew tap repository).
+`brew-up` is a JavaScript GitHub Action that renders one file from a template in the source repository and publishes it to the target tap repository.
 
 It resolves one release, maps release assets, injects SHA-256 checksums, and supports three publish modes: `direct`, `pr`, and `pr-auto-merge`.
 
 ## Requirements
 
-- GitHub Actions workflow runs in repository A after release assets are available.
-- `target-repo-token` can write to repository B.
-- `GITHUB_TOKEN` is available for reading release metadata in repository A.
+- GitHub Actions workflow runs in the source repository after release assets are available.
+- `target-repo-token` can write to the target tap repository.
+- `GITHUB_TOKEN` is available for reading release metadata in the source repository.
 
-For `pr-auto-merge`, the token for repository B must also be allowed to create pull requests and enable auto-merge.
+For `pr-auto-merge`, the token for the target tap repository must also be allowed to create pull requests and enable auto-merge.
 
 ## Inputs
 
 | Input | Required | Description |
 | --- | --- | --- |
-| `release-id` | no | Release ID to resolve in repository A |
-| `release-tag` | no | Release tag to resolve in repository A |
-| `template-path` | yes | Template file path in repository A |
-| `output-path` | yes | Output file path in repository B |
+| `release-id` | no | Release ID to resolve in the source repository |
+| `release-tag` | no | Release tag to resolve in the source repository |
+| `template-path` | yes | Template file path in the source repository |
+| `output-path` | yes | Output file path in the target tap repository |
 | `asset-map` | yes | Newline-delimited `key=pattern` mapping |
 | `checksum-asset` | no | Checksum asset file name in the release |
 | `target-repo` | yes | Target repository in `owner/name` format |
-| `target-branch` | yes | Target branch in repository B |
-| `target-repo-token` | yes | Token used to write repository B |
+| `target-branch` | yes | Target branch in the target tap repository |
+| `target-repo-token` | yes | Token used to write the target tap repository |
 | `publish-mode` | yes | `direct`, `pr`, or `pr-auto-merge` |
 | `only-if-changed` | no | Skip publish when output is unchanged (`true`/`false`, default: `true`) |
 | `dry-run` | no | Resolve and render without mutation (`true`/`false`, default: `false`) |
@@ -124,10 +124,10 @@ jobs:
 
 ## Smoke workflow
 
-This repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end validation against a real repository pair.
+This repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end validation across a source repository and a target tap repository.
 
 - Trigger with `workflow_dispatch`
 - Provide runtime inputs such as release/tag and `asset-map`
-- Store repository B token in `secrets.BREW_UP_TARGET_REPO_TOKEN`
+- Store the target tap repository token in `secrets.BREW_UP_TARGET_REPO_TOKEN`
 
 Use `dry-run=true` first, then run with `dry-run=false` when ready.
