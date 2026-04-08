@@ -11,6 +11,7 @@ const githubMock = vi.hoisted(() => ({
   context: {
     repo: { owner: "owner", repo: "repo" },
     payload: {},
+    runId: 555,
   },
   getOctokit: vi.fn(),
 }));
@@ -47,6 +48,23 @@ const publishDirectMock = vi.hoisted(() => ({
   publishDirect: vi.fn(),
 }));
 
+const publishPrMock = vi.hoisted(() => ({
+  publishPr: vi.fn(),
+}));
+
+const autoMergeMock = vi.hoisted(() => ({
+  enableAutoMerge: vi.fn(),
+}));
+
+const outputResultMock = vi.hoisted(() => ({
+  setBaseOutputs: vi.fn(),
+  setPublishOutputs: vi.fn(),
+}));
+
+const outputSummaryMock = vi.hoisted(() => ({
+  writeWorkflowSummary: vi.fn(),
+}));
+
 vi.mock("@actions/core", () => coreMock);
 vi.mock("@actions/github", () => githubMock);
 vi.mock("../src/config/input.js", () => readInputsMock);
@@ -57,6 +75,10 @@ vi.mock("../src/checksum/index.js", () => checksumMock);
 vi.mock("../src/template/render.js", () => templateMock);
 vi.mock("../src/target/change.js", () => changeMock);
 vi.mock("../src/target/publish-direct.js", () => publishDirectMock);
+vi.mock("../src/target/publish-pr.js", () => publishPrMock);
+vi.mock("../src/target/auto-merge.js", () => autoMergeMock);
+vi.mock("../src/output/result.js", () => outputResultMock);
+vi.mock("../src/output/summary.js", () => outputSummaryMock);
 
 import { run } from "../src/main.js";
 
@@ -132,19 +154,22 @@ function setupBase() {
   assetsMock.resolveArtifacts.mockReturnValue(resolvedArtifacts);
   checksumMock.resolveChecksums.mockResolvedValue(checksummedArtifacts);
   templateMock.renderTemplate.mockResolvedValue("rendered");
+  outputSummaryMock.writeWorkflowSummary.mockResolvedValue(undefined);
 
-  return { validatedInputs, release, resolvedArtifacts };
+  return { validatedInputs };
 }
 
-describe("run milestone 3", () => {
+describe("run milestone 4", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     coreMock.getInput.mockReturnValue("");
     process.env.GITHUB_TOKEN = "source-token";
+    process.env.GITHUB_RUN_ID = "777";
 
     githubMock.getOctokit.mockImplementation((token: string) => ({
       token,
-      rest: { repos: {} },
+      rest: { repos: {}, pulls: {}, git: {} },
+      graphql: vi.fn(),
     }));
   });
 
@@ -160,19 +185,30 @@ describe("run milestone 3", () => {
 
     expect(changeMock.detectChange).toHaveBeenCalled();
     expect(publishDirectMock.publishDirect).not.toHaveBeenCalled();
-    expect(coreMock.setOutput).toHaveBeenCalledWith("changed", "true");
+    expect(publishPrMock.publishPr).not.toHaveBeenCalled();
+    expect(outputResultMock.setBaseOutputs).toHaveBeenCalledWith({
+      changed: true,
+      releaseId: 123,
+      releaseTag: "v1.2.3",
+    });
+    expect(outputSummaryMock.writeWorkflowSummary).toHaveBeenCalled();
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
-  it("skips publish when output is unchanged", async () => {
+  it("skips publish when output is unchanged and only-if-changed=true", async () => {
     setupBase();
     changeMock.detectChange.mockResolvedValue({ changed: false, currentSha: "abc" });
 
     await run();
 
-    expect(changeMock.detectChange).toHaveBeenCalled();
     expect(publishDirectMock.publishDirect).not.toHaveBeenCalled();
-    expect(coreMock.setOutput).toHaveBeenCalledWith("changed", "false");
+    expect(publishPrMock.publishPr).not.toHaveBeenCalled();
+    expect(outputSummaryMock.writeWorkflowSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changed: false,
+        onlyIfChanged: true,
+      }),
+    );
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
@@ -197,24 +233,100 @@ describe("run milestone 3", () => {
         releaseTag: "v1.2.3",
       },
     );
-    expect(coreMock.setOutput).toHaveBeenCalledWith("changed", "true");
-    expect(coreMock.setOutput).toHaveBeenCalledWith("target-commit-sha", "commit123");
+    expect(publishPrMock.publishPr).not.toHaveBeenCalled();
+    expect(outputResultMock.setPublishOutputs).toHaveBeenCalledWith({
+      commitSha: "commit123",
+    });
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
-  it("fails for pr mode until milestone 4", async () => {
+  it("publishes in pr mode", async () => {
     const { validatedInputs } = setupBase();
     validateInputsMock.validateInputs.mockReturnValue({
       ...validatedInputs,
       publishMode: "pr" as const,
     });
     changeMock.detectChange.mockResolvedValue({ changed: true, currentSha: "abc" });
+    publishPrMock.publishPr.mockResolvedValue({
+      commitSha: "commit123",
+      pullRequestNumber: 11,
+      pullRequestUrl: "https://example.test/pr/11",
+      pullRequestNodeId: "PR_node_11",
+      branchName: "brew-up/app/v1.2.3-777",
+    });
 
     await run();
 
     expect(publishDirectMock.publishDirect).not.toHaveBeenCalled();
-    expect(coreMock.setFailed).toHaveBeenCalledWith(
-      expect.stringContaining("UNIMPLEMENTED_MILESTONE"),
+    expect(publishPrMock.publishPr).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ publishMode: "pr" }),
+      "rendered",
+      {
+        currentSha: "abc",
+        releaseTag: "v1.2.3",
+        runId: "777",
+      },
+    );
+    expect(autoMergeMock.enableAutoMerge).not.toHaveBeenCalled();
+    expect(outputResultMock.setPublishOutputs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pullRequestNumber: 11,
+        pullRequestUrl: "https://example.test/pr/11",
+        autoMergeEnabled: false,
+      }),
+    );
+  });
+
+  it("publishes in pr-auto-merge mode and enables auto-merge", async () => {
+    const { validatedInputs } = setupBase();
+    validateInputsMock.validateInputs.mockReturnValue({
+      ...validatedInputs,
+      publishMode: "pr-auto-merge" as const,
+    });
+    changeMock.detectChange.mockResolvedValue({ changed: true, currentSha: "abc" });
+    publishPrMock.publishPr.mockResolvedValue({
+      commitSha: "commit123",
+      pullRequestNumber: 12,
+      pullRequestUrl: "https://example.test/pr/12",
+      pullRequestNodeId: "PR_node_12",
+      branchName: "brew-up/app/v1.2.3-777",
+    });
+
+    await run();
+
+    expect(publishPrMock.publishPr).toHaveBeenCalled();
+    expect(autoMergeMock.enableAutoMerge).toHaveBeenCalledWith(
+      expect.anything(),
+      "PR_node_12",
+    );
+    expect(outputResultMock.setPublishOutputs).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pullRequestNumber: 12,
+        autoMergeEnabled: true,
+      }),
+    );
+  });
+
+  it("continues publish when unchanged and only-if-changed=false", async () => {
+    const { validatedInputs } = setupBase();
+    validateInputsMock.validateInputs.mockReturnValue({
+      ...validatedInputs,
+      onlyIfChanged: false,
+    });
+    changeMock.detectChange.mockResolvedValue({ changed: false, currentSha: "abc" });
+    publishDirectMock.publishDirect.mockResolvedValue({ commitSha: "commit123" });
+
+    await run();
+
+    expect(publishDirectMock.publishDirect).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ onlyIfChanged: false }),
+      "rendered",
+      {
+        currentSha: "abc",
+        releaseTag: "v1.2.3",
+      },
     );
   });
 });

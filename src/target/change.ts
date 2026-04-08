@@ -16,7 +16,7 @@ interface TargetRepoReader {
         repo: string;
         path: string;
         ref: string;
-      }): Promise<{ data: GetContentFileResponse | unknown[] }>;
+      }): Promise<{ data: unknown }>;
     };
   };
 }
@@ -41,6 +41,18 @@ function decodeContent(content: GetContentFileResponse): string {
   return Buffer.from(content.content, "base64").toString("utf8");
 }
 
+function isFileResponse(data: unknown): data is GetContentFileResponse {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "type" in data &&
+    (data as { type?: unknown }).type === "file" &&
+    "encoding" in data &&
+    "content" in data &&
+    "sha" in data
+  );
+}
+
 export async function detectChange(
   client: TargetRepoReader,
   config: Pick<ValidatedInputs, "outputPath" | "targetRepo" | "targetBranch">,
@@ -54,7 +66,7 @@ export async function detectChange(
       ref: config.targetBranch,
     });
 
-    if (Array.isArray(response.data) || response.data.type !== "file") {
+    if (Array.isArray(response.data) || !isFileResponse(response.data)) {
       throw new BrewUpError(
         "TARGET_OUTPUT_READ_FAILED",
         `Target path is not a file: ${config.outputPath}.`,

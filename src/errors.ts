@@ -14,7 +14,8 @@ export type ErrorCode =
   | "TEMPLATE_UNRESOLVED_VARIABLE"
   | "TARGET_OUTPUT_READ_FAILED"
   | "TARGET_REPO_WRITE_FAILED"
-  | "UNIMPLEMENTED_MILESTONE";
+  | "PULL_REQUEST_CREATE_FAILED"
+  | "AUTO_MERGE_ENABLE_FAILED";
 
 export class BrewUpError extends Error {
   readonly code: ErrorCode;

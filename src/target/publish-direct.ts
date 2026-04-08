@@ -7,8 +7,8 @@ interface CommitIdentity {
 }
 
 interface CreateOrUpdateFileResponse {
-  commit: {
-    sha: string;
+  commit?: {
+    sha?: string;
   };
 }
 
@@ -56,7 +56,15 @@ export async function publishDirect(
       author: config.commitAuthor,
     });
 
-    return { commitSha: response.data.commit.sha };
+    const commitSha = response.data.commit?.sha;
+    if (!commitSha) {
+      throw new BrewUpError(
+        "TARGET_REPO_WRITE_FAILED",
+        "Missing commit SHA from target repository write response.",
+      );
+    }
+
+    return { commitSha };
   } catch (error) {
     throw new BrewUpError(
       "TARGET_REPO_WRITE_FAILED",

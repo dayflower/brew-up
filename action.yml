@@ -48,3 +48,16 @@ inputs:
 runs:
   using: 'node24'
   main: 'lib/main.js'
+outputs:
+  changed:
+    description: 'Whether the generated output differs from target content'
+  target-commit-sha:
+    description: 'Target repository commit SHA when a commit is created'
+  pull-request-number:
+    description: 'Pull request number when PR mode creates a pull request'
+  pull-request-url:
+    description: 'Pull request URL when PR mode creates a pull request'
+  resolved-release-id:
+    description: 'Resolved source release ID'
+  resolved-release-tag:
+    description: 'Resolved source release tag'

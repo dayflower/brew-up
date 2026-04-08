@@ -97,3 +97,29 @@ export interface ChangeDetectionResult {
 export interface PublishDirectResult {
   commitSha: string;
 }
+
+export interface PublishPrResult {
+  commitSha: string;
+  pullRequestNumber: number;
+  pullRequestUrl: string;
+  pullRequestNodeId: string;
+  branchName: string;
+}
+
+export interface PublishOutcome {
+  commitSha?: string;
+  pullRequestNumber?: number;
+  pullRequestUrl?: string;
+  autoMergeEnabled?: boolean;
+}
+
+export interface SummaryInput {
+  release: Pick<ResolvedRelease, "id" | "tagName" | "name" | "url">;
+  resolvedArtifacts: ResolvedArtifacts;
+  checksumSource: "asset" | "download";
+  changed: boolean;
+  publishMode: PublishMode;
+  dryRun: boolean;
+  onlyIfChanged: boolean;
+  publishOutcome?: PublishOutcome;
+}
