@@ -1,10 +1,6 @@
 import { BrewUpError } from "../errors.js";
 import type { PublishPrResult, ValidatedInputs } from "../types.js";
-
-interface CommitIdentity {
-  name: string;
-  email: string;
-}
+import { buildCommitMessage, buildFileWriteRequest } from "./publish-shared.js";
 
 interface PullRequestResponse {
   number: number;
@@ -28,8 +24,8 @@ interface PullRequestWriter {
         message: string;
         content: string;
         sha?: string;
-        committer?: CommitIdentity;
-        author?: CommitIdentity;
+        committer?: { name: string; email: string };
+        author?: { name: string; email: string };
       }): Promise<{ data: { commit?: { sha?: string } } }>;
     };
     git: {
@@ -76,8 +72,26 @@ function buildBranchName(
   return `brew-up/${packageName}/${sanitizeBranchPart(releaseTag)}-${sanitizeBranchPart(runId)}`;
 }
 
-function buildCommitMessage(outputPath: string, tagName: string): string {
-  return `brew-up: update ${outputPath} for ${tagName}`;
+interface PrPublishPlan {
+  branchName: string;
+  branchRef: string;
+  pullRequestTitle: string;
+}
+
+function buildPrPublishPlan(
+  config: Pick<ValidatedInputs, "outputPath">,
+  options: Pick<{ releaseTag: string; runId: string }, "releaseTag" | "runId">,
+): PrPublishPlan {
+  const branchName = buildBranchName(
+    config.outputPath,
+    options.releaseTag,
+    options.runId,
+  );
+  return {
+    branchName,
+    branchRef: `refs/heads/${branchName}`,
+    pullRequestTitle: buildCommitMessage(config.outputPath, options.releaseTag),
+  };
 }
 
 export async function publishPr(
@@ -89,11 +103,7 @@ export async function publishPr(
   renderedOutput: string,
   options: { currentSha?: string; releaseTag: string; runId: string },
 ): Promise<PublishPrResult> {
-  const branchName = buildBranchName(
-    config.outputPath,
-    options.releaseTag,
-    options.runId,
-  );
+  const plan = buildPrPublishPlan(config, options);
 
   try {
     const branchResponse = await client.rest.repos.getBranch({
@@ -105,28 +115,20 @@ export async function publishPr(
     await client.rest.git.createRef({
       owner: config.targetRepo.owner,
       repo: config.targetRepo.name,
-      ref: `refs/heads/${branchName}`,
+      ref: plan.branchRef,
       sha: branchResponse.data.commit.sha,
     });
 
-    const commitResponse = await client.rest.repos.createOrUpdateFileContents({
-      owner: config.targetRepo.owner,
-      repo: config.targetRepo.name,
-      path: config.outputPath,
-      branch: branchName,
-      message: buildCommitMessage(config.outputPath, options.releaseTag),
-      content: Buffer.from(renderedOutput, "utf8").toString("base64"),
-      sha: options.currentSha,
-      committer: config.commitAuthor,
-      author: config.commitAuthor,
-    });
+    const commitResponse = await client.rest.repos.createOrUpdateFileContents(
+      buildFileWriteRequest(config, plan.branchName, renderedOutput, options),
+    );
 
     const prResponse = await client.rest.pulls.create({
       owner: config.targetRepo.owner,
       repo: config.targetRepo.name,
       base: config.targetBranch,
-      head: branchName,
-      title: buildCommitMessage(config.outputPath, options.releaseTag),
+      head: plan.branchName,
+      title: plan.pullRequestTitle,
     });
 
     const commitSha = commitResponse.data.commit?.sha;
@@ -142,7 +144,7 @@ export async function publishPr(
       pullRequestNumber: prResponse.data.number,
       pullRequestUrl: prResponse.data.html_url,
       pullRequestNodeId: prResponse.data.node_id,
-      branchName,
+      branchName: plan.branchName,
     };
   } catch (error) {
     throw new BrewUpError(

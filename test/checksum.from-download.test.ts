@@ -66,4 +66,30 @@ describe("resolveChecksumsFromDownload", () => {
     expect(result.artifacts.default.sha256).toBe(expectedHash);
     expect(globalThis.fetch).toHaveBeenCalledTimes(3);
   });
+
+  it("supports stream hashing for large payloads without arrayBuffer()", async () => {
+    const data = Buffer.from("chunk-data-".repeat(200_000), "utf8");
+    const expectedHash = createHash("sha256").update(data).digest("hex");
+
+    const response = new Response(
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          const chunkSize = 16 * 1024;
+          for (let index = 0; index < data.length; index += chunkSize) {
+            controller.enqueue(data.subarray(index, index + chunkSize));
+          }
+          controller.close();
+        },
+      }),
+      { status: 200 },
+    );
+    vi.spyOn(response, "arrayBuffer").mockRejectedValue(
+      new Error("arrayBuffer should not be used"),
+    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+
+    const result = await resolveChecksumsFromDownload(resolvedArtifacts);
+    expect(result.artifacts.default.sha256).toBe(expectedHash);
+    expect(result.artifact?.sha256).toBe(expectedHash);
+  });
 });

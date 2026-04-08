@@ -14,7 +14,7 @@ import { enableAutoMerge } from "./target/auto-merge.js";
 import { detectChange } from "./target/change.js";
 import { publishDirect } from "./target/publish-direct.js";
 import { publishPr } from "./target/publish-pr.js";
-import type { PublishOutcome } from "./types.js";
+import type { PublishOutcome, SummaryInput } from "./types.js";
 
 function getGitHubToken(): string {
   const token = process.env.GITHUB_TOKEN?.trim();
@@ -41,6 +41,42 @@ function getRunId(): string {
     "INVALID_INPUT",
     "GITHUB_RUN_ID environment variable is required for PR publish modes.",
   );
+}
+
+function decidePublishSkipReason(input: {
+  changed: boolean;
+  onlyIfChanged: boolean;
+  dryRun: boolean;
+}): "unchanged" | "dry-run" | undefined {
+  if (!input.changed && input.onlyIfChanged) {
+    return "unchanged";
+  }
+  if (input.dryRun) {
+    return "dry-run";
+  }
+  return undefined;
+}
+
+function buildSummaryInput(input: {
+  release: SummaryInput["release"];
+  resolvedArtifacts: SummaryInput["resolvedArtifacts"];
+  checksumSource: SummaryInput["checksumSource"];
+  changed: boolean;
+  publishMode: SummaryInput["publishMode"];
+  dryRun: boolean;
+  onlyIfChanged: boolean;
+  publishOutcome?: PublishOutcome;
+}): SummaryInput {
+  return {
+    release: input.release,
+    resolvedArtifacts: input.resolvedArtifacts,
+    checksumSource: input.checksumSource,
+    changed: input.changed,
+    publishMode: input.publishMode,
+    dryRun: input.dryRun,
+    onlyIfChanged: input.onlyIfChanged,
+    publishOutcome: input.publishOutcome,
+  };
 }
 
 export async function run(): Promise<void> {
@@ -108,36 +144,33 @@ export async function run(): Promise<void> {
       releaseTag: release.tagName,
     });
 
-    const shouldSkipForNoChange = !change.changed && config.onlyIfChanged;
-    if (shouldSkipForNoChange) {
+    const summaryBase = buildSummaryInput({
+      release,
+      resolvedArtifacts: checksummed,
+      checksumSource: config.checksumAsset ? "asset" : "download",
+      changed: change.changed,
+      publishMode: config.publishMode,
+      dryRun: config.dryRun,
+      onlyIfChanged: config.onlyIfChanged,
+    });
+
+    const skipReason = decidePublishSkipReason({
+      changed: change.changed,
+      onlyIfChanged: config.onlyIfChanged,
+      dryRun: config.dryRun,
+    });
+    if (skipReason === "unchanged") {
       core.info("No output change detected; skipping publish.");
-      await writeWorkflowSummary({
-        release,
-        resolvedArtifacts: checksummed,
-        checksumSource: config.checksumAsset ? "asset" : "download",
-        changed: change.changed,
-        publishMode: config.publishMode,
-        dryRun: config.dryRun,
-        onlyIfChanged: config.onlyIfChanged,
-      });
+      await writeWorkflowSummary(summaryBase);
+      return;
+    }
+    if (skipReason === "dry-run") {
+      core.info("Dry run enabled; skipping publish.");
+      await writeWorkflowSummary(summaryBase);
       return;
     }
 
     let publishOutcome: PublishOutcome | undefined;
-
-    if (config.dryRun) {
-      core.info("Dry run enabled; skipping publish.");
-      await writeWorkflowSummary({
-        release,
-        resolvedArtifacts: checksummed,
-        checksumSource: config.checksumAsset ? "asset" : "download",
-        changed: change.changed,
-        publishMode: config.publishMode,
-        dryRun: config.dryRun,
-        onlyIfChanged: config.onlyIfChanged,
-      });
-      return;
-    }
 
     if (config.publishMode === "direct") {
       const published = await publishDirect(
@@ -178,13 +211,7 @@ export async function run(): Promise<void> {
 
     setPublishOutputs(publishOutcome);
     await writeWorkflowSummary({
-      release,
-      resolvedArtifacts: checksummed,
-      checksumSource: config.checksumAsset ? "asset" : "download",
-      changed: change.changed,
-      publishMode: config.publishMode,
-      dryRun: config.dryRun,
-      onlyIfChanged: config.onlyIfChanged,
+      ...summaryBase,
       publishOutcome,
     });
   } catch (error) {

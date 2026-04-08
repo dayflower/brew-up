@@ -1,10 +1,6 @@
 import { BrewUpError } from "../errors.js";
 import type { PublishDirectResult, ValidatedInputs } from "../types.js";
-
-interface CommitIdentity {
-  name: string;
-  email: string;
-}
+import { buildFileWriteRequest } from "./publish-shared.js";
 
 interface CreateOrUpdateFileResponse {
   commit?: {
@@ -15,23 +11,11 @@ interface CreateOrUpdateFileResponse {
 interface TargetRepoWriter {
   rest: {
     repos: {
-      createOrUpdateFileContents(params: {
-        owner: string;
-        repo: string;
-        path: string;
-        branch: string;
-        message: string;
-        content: string;
-        sha?: string;
-        committer?: CommitIdentity;
-        author?: CommitIdentity;
-      }): Promise<{ data: CreateOrUpdateFileResponse }>;
+      createOrUpdateFileContents(params: unknown): Promise<{
+        data: CreateOrUpdateFileResponse;
+      }>;
     };
   };
-}
-
-function buildCommitMessage(outputPath: string, tagName: string): string {
-  return `brew-up: update ${outputPath} for ${tagName}`;
 }
 
 export async function publishDirect(
@@ -44,17 +28,14 @@ export async function publishDirect(
   options: { currentSha?: string; releaseTag: string },
 ): Promise<PublishDirectResult> {
   try {
-    const response = await client.rest.repos.createOrUpdateFileContents({
-      owner: config.targetRepo.owner,
-      repo: config.targetRepo.name,
-      path: config.outputPath,
-      branch: config.targetBranch,
-      message: buildCommitMessage(config.outputPath, options.releaseTag),
-      content: Buffer.from(renderedOutput, "utf8").toString("base64"),
-      sha: options.currentSha,
-      committer: config.commitAuthor,
-      author: config.commitAuthor,
-    });
+    const response = await client.rest.repos.createOrUpdateFileContents(
+      buildFileWriteRequest(
+        config,
+        config.targetBranch,
+        renderedOutput,
+        options,
+      ),
+    );
 
     const commitSha = response.data.commit?.sha;
     if (!commitSha) {

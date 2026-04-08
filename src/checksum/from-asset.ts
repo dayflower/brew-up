@@ -1,6 +1,7 @@
 import path from "node:path";
 import { BrewUpError } from "../errors.js";
-import type { ResolvedArtifacts, ReleaseAsset } from "../types.js";
+import type { ReleaseAsset, ResolvedArtifacts } from "../types.js";
+import { applySha256ToResolvedArtifacts } from "./apply-sha256.js";
 import { fetchWithRetry } from "./fetch-retry.js";
 
 interface ChecksumAssetEntry {
@@ -119,22 +120,7 @@ export async function resolveChecksumsFromAsset(
     );
   }
 
-  const artifactsWithChecksums = Object.fromEntries(
-    Object.entries(resolvedArtifacts.artifacts).map(([key, artifact]) => [
-      key,
-      {
-        ...artifact,
-        sha256: resolveChecksumForArtifact(artifact.name, checksumEntries),
-      },
-    ]),
+  return applySha256ToResolvedArtifacts(resolvedArtifacts, (artifact) =>
+    resolveChecksumForArtifact(artifact.name, checksumEntries),
   );
-
-  const artifact = resolvedArtifacts.artifact
-    ? artifactsWithChecksums[resolvedArtifacts.artifact.key]
-    : undefined;
-
-  return {
-    artifacts: artifactsWithChecksums,
-    artifact,
-  };
 }
