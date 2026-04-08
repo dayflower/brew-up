@@ -44,9 +44,9 @@ describe("resolveChecksumsFromDownload", () => {
       new Response("error", { status: 500 }),
     );
 
-    await expect(resolveChecksumsFromDownload(resolvedArtifacts)).rejects.toThrow(
-      /Failed to download artifact/,
-    );
+    await expect(
+      resolveChecksumsFromDownload(resolvedArtifacts),
+    ).rejects.toThrow(/Failed to download artifact/);
   });
 
   it("retries transient failures and then succeeds", async () => {

@@ -179,7 +179,10 @@ describe("run milestone 4", () => {
       ...validatedInputs,
       dryRun: true,
     });
-    changeMock.detectChange.mockResolvedValue({ changed: true, currentSha: "abc" });
+    changeMock.detectChange.mockResolvedValue({
+      changed: true,
+      currentSha: "abc",
+    });
 
     await run();
 
@@ -197,7 +200,10 @@ describe("run milestone 4", () => {
 
   it("skips publish when output is unchanged and only-if-changed=true", async () => {
     setupBase();
-    changeMock.detectChange.mockResolvedValue({ changed: false, currentSha: "abc" });
+    changeMock.detectChange.mockResolvedValue({
+      changed: false,
+      currentSha: "abc",
+    });
 
     await run();
 
@@ -214,8 +220,13 @@ describe("run milestone 4", () => {
 
   it("publishes in direct mode when changed", async () => {
     const { validatedInputs } = setupBase();
-    changeMock.detectChange.mockResolvedValue({ changed: true, currentSha: "abc" });
-    publishDirectMock.publishDirect.mockResolvedValue({ commitSha: "commit123" });
+    changeMock.detectChange.mockResolvedValue({
+      changed: true,
+      currentSha: "abc",
+    });
+    publishDirectMock.publishDirect.mockResolvedValue({
+      commitSha: "commit123",
+    });
 
     await run();
 
@@ -246,7 +257,10 @@ describe("run milestone 4", () => {
       ...validatedInputs,
       publishMode: "pr" as const,
     });
-    changeMock.detectChange.mockResolvedValue({ changed: true, currentSha: "abc" });
+    changeMock.detectChange.mockResolvedValue({
+      changed: true,
+      currentSha: "abc",
+    });
     publishPrMock.publishPr.mockResolvedValue({
       commitSha: "commit123",
       pullRequestNumber: 11,
@@ -284,7 +298,10 @@ describe("run milestone 4", () => {
       ...validatedInputs,
       publishMode: "pr-auto-merge" as const,
     });
-    changeMock.detectChange.mockResolvedValue({ changed: true, currentSha: "abc" });
+    changeMock.detectChange.mockResolvedValue({
+      changed: true,
+      currentSha: "abc",
+    });
     publishPrMock.publishPr.mockResolvedValue({
       commitSha: "commit123",
       pullRequestNumber: 12,
@@ -314,8 +331,13 @@ describe("run milestone 4", () => {
       ...validatedInputs,
       onlyIfChanged: false,
     });
-    changeMock.detectChange.mockResolvedValue({ changed: false, currentSha: "abc" });
-    publishDirectMock.publishDirect.mockResolvedValue({ commitSha: "commit123" });
+    changeMock.detectChange.mockResolvedValue({
+      changed: false,
+      currentSha: "abc",
+    });
+    publishDirectMock.publishDirect.mockResolvedValue({
+      commitSha: "commit123",
+    });
 
     await run();
 

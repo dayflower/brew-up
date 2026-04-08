@@ -55,7 +55,9 @@ describe("resolveChecksums", () => {
   });
 
   it("uses download mode when checksumAsset is absent", async () => {
-    fromDownload.resolveChecksumsFromDownload.mockResolvedValue(resolvedArtifacts);
+    fromDownload.resolveChecksumsFromDownload.mockResolvedValue(
+      resolvedArtifacts,
+    );
 
     await resolveChecksums({
       release,

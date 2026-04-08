@@ -95,7 +95,9 @@ export async function run(): Promise<void> {
     core.info(
       `Resolved artifact keys: ${Object.keys(checksummed.artifacts).join(", ")}`,
     );
-    core.info(`Rendered output bytes: ${Buffer.byteLength(renderedOutput, "utf8")}`);
+    core.info(
+      `Rendered output bytes: ${Buffer.byteLength(renderedOutput, "utf8")}`,
+    );
 
     const targetOctokit = github.getOctokit(config.targetRepoToken);
     const change = await detectChange(targetOctokit, config, renderedOutput);
@@ -138,10 +140,15 @@ export async function run(): Promise<void> {
     }
 
     if (config.publishMode === "direct") {
-      const published = await publishDirect(targetOctokit, config, renderedOutput, {
-        currentSha: change.currentSha,
-        releaseTag: release.tagName,
-      });
+      const published = await publishDirect(
+        targetOctokit,
+        config,
+        renderedOutput,
+        {
+          currentSha: change.currentSha,
+          releaseTag: release.tagName,
+        },
+      );
       publishOutcome = { commitSha: published.commitSha };
       core.info(`Published output commit: ${published.commitSha}`);
     } else {

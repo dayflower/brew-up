@@ -39,7 +39,10 @@ export async function fetchWithRetry(
       }
 
       const statusMessage = `HTTP status: ${response.status} (attempt ${attempt}/${DEFAULT_MAX_ATTEMPTS}).`;
-      if (!isRetryableStatus(response.status) || attempt === DEFAULT_MAX_ATTEMPTS) {
+      if (
+        !isRetryableStatus(response.status) ||
+        attempt === DEFAULT_MAX_ATTEMPTS
+      ) {
         throw new BrewUpError(
           "CHECKSUM_FETCH_FAILED",
           `Failed to download ${resourceDescription}.`,

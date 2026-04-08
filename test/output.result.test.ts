@@ -21,8 +21,14 @@ describe("output/result", () => {
     });
 
     expect(coreMock.setOutput).toHaveBeenCalledWith("changed", "true");
-    expect(coreMock.setOutput).toHaveBeenCalledWith("resolved-release-id", "123");
-    expect(coreMock.setOutput).toHaveBeenCalledWith("resolved-release-tag", "v1.2.3");
+    expect(coreMock.setOutput).toHaveBeenCalledWith(
+      "resolved-release-id",
+      "123",
+    );
+    expect(coreMock.setOutput).toHaveBeenCalledWith(
+      "resolved-release-tag",
+      "v1.2.3",
+    );
   });
 
   it("sets only available publish outputs", () => {
@@ -33,7 +39,10 @@ describe("output/result", () => {
     });
 
     expect(coreMock.setOutput).toHaveBeenCalledWith("target-commit-sha", "abc");
-    expect(coreMock.setOutput).toHaveBeenCalledWith("pull-request-number", "99");
+    expect(coreMock.setOutput).toHaveBeenCalledWith(
+      "pull-request-number",
+      "99",
+    );
     expect(coreMock.setOutput).toHaveBeenCalledWith(
       "pull-request-url",
       "https://example.test/pr/99",

@@ -74,7 +74,9 @@ describe("writeWorkflowSummary", () => {
   });
 
   it("writes unchanged skip message", async () => {
-    await writeWorkflowSummary(makeInput({ changed: false, onlyIfChanged: true }));
+    await writeWorkflowSummary(
+      makeInput({ changed: false, onlyIfChanged: true }),
+    );
 
     expect(coreMock.summary.addRaw).toHaveBeenCalledWith(
       expect.stringContaining("Publish skipped: unchanged output"),

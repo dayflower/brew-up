@@ -100,7 +100,9 @@ export async function renderTemplate(
   }
 
   const rendered = Mustache.render(template, context);
-  const unresolvedAfterRender = [...new Set(rendered.matchAll(PLACEHOLDER_PATTERN))]
+  const unresolvedAfterRender = [
+    ...new Set(rendered.matchAll(PLACEHOLDER_PATTERN)),
+  ]
     .map((match) => match[1])
     .sort();
 

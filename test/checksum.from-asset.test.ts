@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveChecksumsFromAsset } from "../src/checksum/from-asset.js";
 import type { ReleaseAsset, ResolvedArtifacts } from "../src/types.js";
 
-const SHA_A = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-const SHA_B = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+const SHA_A =
+  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const SHA_B =
+  "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
 const releaseAssets: ReleaseAsset[] = [
   {
@@ -77,7 +79,11 @@ describe("resolveChecksumsFromAsset", () => {
 
   it("fails when checksum asset is missing", async () => {
     await expect(
-      resolveChecksumsFromAsset("missing.txt", releaseAssets, resolvedArtifacts),
+      resolveChecksumsFromAsset(
+        "missing.txt",
+        releaseAssets,
+        resolvedArtifacts,
+      ),
     ).rejects.toThrow(/was not found/);
   });
 
@@ -89,7 +95,11 @@ describe("resolveChecksumsFromAsset", () => {
     );
 
     await expect(
-      resolveChecksumsFromAsset("checksums.txt", releaseAssets, resolvedArtifacts),
+      resolveChecksumsFromAsset(
+        "checksums.txt",
+        releaseAssets,
+        resolvedArtifacts,
+      ),
     ).rejects.toThrow(/by basename/);
   });
 
@@ -99,7 +109,11 @@ describe("resolveChecksumsFromAsset", () => {
     );
 
     await expect(
-      resolveChecksumsFromAsset("checksums.txt", releaseAssets, resolvedArtifacts),
+      resolveChecksumsFromAsset(
+        "checksums.txt",
+        releaseAssets,
+        resolvedArtifacts,
+      ),
     ).rejects.toThrow(/Invalid checksum line format/);
   });
 
@@ -107,7 +121,9 @@ describe("resolveChecksumsFromAsset", () => {
     vi.useFakeTimers();
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response("busy", { status: 503 }))
-      .mockResolvedValueOnce(new Response(`${SHA_A}  app.zip\n`, { status: 200 }));
+      .mockResolvedValueOnce(
+        new Response(`${SHA_A}  app.zip\n`, { status: 200 }),
+      );
 
     const pending = resolveChecksumsFromAsset(
       "checksums.txt",

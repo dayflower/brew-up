@@ -24,16 +24,24 @@ export async function writeWorkflowSummary(input: SummaryInput): Promise<void> {
   );
   summary.addRaw(`Release URL: ${input.release.url}\n\n`, true);
   summary.addRaw(`Publish mode: \`${input.publishMode}\`\n\n`, true);
-  summary.addRaw(`Checksum source: ${checksumSourceText(input.checksumSource)}\n\n`, true);
+  summary.addRaw(
+    `Checksum source: ${checksumSourceText(input.checksumSource)}\n\n`,
+    true,
+  );
   summary.addRaw(`Changed: \`${String(input.changed)}\`\n\n`, true);
 
   if (input.onlyIfChanged && !input.changed) {
-    summary.addRaw("Publish skipped: unchanged output with `only-if-changed=true`.\n\n", true);
+    summary.addRaw(
+      "Publish skipped: unchanged output with `only-if-changed=true`.\n\n",
+      true,
+    );
   } else if (input.dryRun) {
     summary.addRaw("Publish skipped: `dry-run=true`.\n\n", true);
   } else if (input.publishOutcome?.pullRequestUrl) {
     const autoMergeSuffix =
-      input.publishOutcome.autoMergeEnabled === true ? " (auto-merge enabled)" : "";
+      input.publishOutcome.autoMergeEnabled === true
+        ? " (auto-merge enabled)"
+        : "";
     summary.addRaw(
       `Pull request: #${input.publishOutcome.pullRequestNumber} ${input.publishOutcome.pullRequestUrl}${autoMergeSuffix}\n\n`,
       true,

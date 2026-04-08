@@ -3,7 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderTemplate } from "../src/template/render.js";
-import type { ReleaseTemplateVariables, ResolvedArtifacts } from "../src/types.js";
+import type {
+  ReleaseTemplateVariables,
+  ResolvedArtifacts,
+} from "../src/types.js";
 
 const releaseVariables: ReleaseTemplateVariables = {
   version: "1.2.3",
@@ -20,7 +23,8 @@ const checksummedArtifacts: ResolvedArtifacts = {
       name: "app.zip",
       url: "https://example.test/app.zip",
       apiUrl: "https://api.example.test/assets/1",
-      sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      sha256:
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     },
   },
   artifact: {

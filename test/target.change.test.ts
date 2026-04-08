@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { detectChange } from "../src/target/change.js";
 
-function createClient(getContentImpl: (params: unknown) => Promise<{ data: unknown }>) {
+function createClient(
+  getContentImpl: (params: unknown) => Promise<{ data: unknown }>,
+) {
   return {
     rest: {
       repos: {
@@ -63,6 +65,8 @@ describe("detectChange", () => {
   it("fails when target path is not a file", async () => {
     const client = createClient(async () => ({ data: [] }));
 
-    await expect(detectChange(client, config, "x")).rejects.toThrow(/not a file/);
+    await expect(detectChange(client, config, "x")).rejects.toThrow(
+      /not a file/,
+    );
   });
 });

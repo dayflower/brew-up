@@ -35,7 +35,11 @@ describe("publishPr", () => {
       data: { commit: { sha: "commit-sha" } },
     });
     client.rest.pulls.create.mockResolvedValue({
-      data: { number: 12, html_url: "https://example.test/pr/12", node_id: "PR_node_12" },
+      data: {
+        number: 12,
+        html_url: "https://example.test/pr/12",
+        node_id: "PR_node_12",
+      },
     });
 
     const result = await publishPr(client, baseConfig, "rendered", {
@@ -81,7 +85,11 @@ describe("publishPr", () => {
       data: { commit: { sha: "commit-sha" } },
     });
     client.rest.pulls.create.mockResolvedValue({
-      data: { number: 1, html_url: "https://example.test/pr/1", node_id: "PR_node_1" },
+      data: {
+        number: 1,
+        html_url: "https://example.test/pr/1",
+        node_id: "PR_node_1",
+      },
     });
 
     await publishPr(

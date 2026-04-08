@@ -8,10 +8,8 @@ interface ChecksumAssetEntry {
   sha256: string;
 }
 
-const GNU_SHA256_LINE =
-  /^([a-fA-F0-9]{64})\s\s?\*?(.+)$/;
-const BSD_SHA256_LINE =
-  /^SHA256\s+\((.+)\)\s+=\s+([a-fA-F0-9]{64})$/i;
+const GNU_SHA256_LINE = /^([a-fA-F0-9]{64})\s\s?\*?(.+)$/;
+const BSD_SHA256_LINE = /^SHA256\s+\((.+)\)\s+=\s+([a-fA-F0-9]{64})$/i;
 
 function parseChecksumLine(line: string): ChecksumAssetEntry | undefined {
   const trimmed = line.trim();

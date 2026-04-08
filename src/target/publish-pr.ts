@@ -67,7 +67,11 @@ function derivePackageNameFromOutputPath(outputPath: string): string {
   return sanitizeBranchPart(withoutExt);
 }
 
-function buildBranchName(outputPath: string, releaseTag: string, runId: string): string {
+function buildBranchName(
+  outputPath: string,
+  releaseTag: string,
+  runId: string,
+): string {
   const packageName = derivePackageNameFromOutputPath(outputPath);
   return `brew-up/${packageName}/${sanitizeBranchPart(releaseTag)}-${sanitizeBranchPart(runId)}`;
 }
