@@ -131,3 +131,7 @@ This repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end
 - Store the target tap repository token in `secrets.BREW_UP_TARGET_REPO_TOKEN`
 
 Use `dry-run=true` first, then run with `dry-run=false` when ready.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
