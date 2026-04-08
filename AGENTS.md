@@ -9,6 +9,9 @@ It resolves a release, maps assets, injects checksums, and writes the rendered o
 - `npm run build`
 - `npm run test`
 - `npm run lint`
+- `npm run lint:fix`
+- `npm run format`
+- `npm run format:check`
 - `npm run check`
 
 ## Source of Truth
@@ -21,6 +24,8 @@ It resolves a release, maps assets, injects checksums, and writes the rendered o
 - Preserve existing project style and conventions.
 - Avoid unnecessary large refactors.
 - Keep changes tightly scoped to the task objective.
+- Prefer `npm run lint:fix` when automatic fixes are needed.
+- Use `npm run format` for formatting and `npm run format:check` for CI/verification.
 
 ## Commit Rule
 - Commit message must be a single-line title.
