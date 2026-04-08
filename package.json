@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "description": "GitHub Action to update Homebrew tap files from release assets",
-  "main": "lib/main.js",
+  "main": "lib/main.mjs",
   "scripts": {
     "check": "npm run lint && npm run test",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsdown --config tsdown.config.ts",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint .",
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
     "@types/node": "^24.0.0",
+    "tsdown": "^0.21.7",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }
