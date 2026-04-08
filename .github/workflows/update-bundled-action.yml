@@ -1,0 +1,47 @@
+name: update-bundled-action
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "tsdown.config.ts"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-and-open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build bundled action output
+        run: npm run build
+
+      - name: Create pull request for bundled output
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ci/update-bundled-action
+          delete-branch: true
+          title: "chore: update bundled action output"
+          commit-message: "chore: update bundled action output"
+          body: |
+            This PR updates the generated JavaScript bundle for the GitHub Action.
+          add-paths: |
+            lib/main.mjs
