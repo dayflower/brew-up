@@ -33,14 +33,115 @@ For `pr-auto-merge`, the token for the target tap repository must also be allowe
 
 ## Outputs
 
-- `changed`
-- `target-commit-sha`
-- `pull-request-number`
-- `pull-request-url`
-- `resolved-release-id`
-- `resolved-release-tag`
+| Output | Description | Availability |
+| --- | --- | --- |
+| `changed` | Whether the rendered output differs from the current file in the target repository | Always |
+| `target-commit-sha` | Commit SHA created in the target repository | Set when a commit is created |
+| `pull-request-number` | Pull request number | Set in `pr` and `pr-auto-merge` when a PR is created |
+| `pull-request-url` | Pull request URL | Set in `pr` and `pr-auto-merge` when a PR is created |
+| `resolved-release-id` | Resolved source release ID | Always |
+| `resolved-release-tag` | Resolved source release tag | Always |
+
+When `changed=false` and `only-if-changed=true`, commit- and PR-related outputs may be empty.
+
+## Template Syntax and Variables
+
+The template engine is [Mustache](https://mustache.github.io/) (`{{...}}` placeholders).
+
+- Dot notation is supported (for example: `{{artifacts.default.sha256}}`).
+- If the template references unknown variables, the action fails.
+- If rendered output still contains unresolved placeholders, the action fails.
+
+### Available Template Variables
+
+| Variable | Type | Description |
+| --- | --- | --- |
+| `version` | string | Release version derived from tag (for example `1.2.3` from `v1.2.3`) |
+| `tag_name` | string | Release tag name (for example `v1.2.3`) |
+| `release_id` | string | Resolved release ID |
+| `release_name` | string | Release name |
+| `release_url` | string | Release HTML URL |
+| `artifacts.<key>.name` | string | Resolved asset file name for the key |
+| `artifacts.<key>.url` | string | Browser download URL for the key |
+| `artifacts.<key>.sha256` | string | SHA-256 checksum for the key |
+| `artifact.name` | string | Single-artifact alias of `artifacts.<key>.name` |
+| `artifact.url` | string | Single-artifact alias of `artifacts.<key>.url` |
+| `artifact.sha256` | string | Single-artifact alias of `artifacts.<key>.sha256` |
+
+`artifact.*` is available only when `asset-map` defines exactly one key.
+
+### Template Example: Single Artifact (Minimal)
+
+```mustache
+cask "myapp" do
+  version "{{version}}"
+  sha256 "{{artifact.sha256}}"
+
+  url "{{artifact.url}}"
+  name "{{release_name}}"
+end
+```
+
+This example requires `asset-map` to contain exactly one key.
+
+### Template Example: Multiple Artifacts (Practical)
+
+```mustache
+cask "myapp" do
+  version "{{version}}"
+
+  if Hardware::CPU.arm?
+    url "{{artifacts.darwin_arm64.url}}"
+    sha256 "{{artifacts.darwin_arm64.sha256}}"
+  else
+    url "{{artifacts.darwin_amd64.url}}"
+    sha256 "{{artifacts.darwin_amd64.sha256}}"
+  end
+end
+```
+
+This example uses explicit keys from `asset-map` and does not rely on `artifact.*`.
+
+## asset-map Format and Resolution Rules
+
+`asset-map` is newline-delimited `key=pattern` input.
+
+```text
+default=myapp-{{version}}.zip
+darwin_arm64=myapp-{{version}}-darwin-arm64.zip
+darwin_amd64=myapp-{{version}}-darwin-amd64.zip
+```
+
+Rules:
+
+- Each line must be `key=pattern` with non-empty key and pattern.
+- Keys must be unique.
+- `*` in pattern works as glob wildcard.
+- Pattern without `*` is treated as exact file name.
+- Template-like variables are expanded in pattern values before matching.
+- Supported pattern variables are: `{{version}}`, `{{tag_name}}`, `{{release_id}}`, `{{release_name}}`, `{{release_url}}`.
+- Unknown pattern variables cause failure.
+- Each key must resolve to exactly one release asset:
+  - zero matches: failure
+  - multiple matches: failure
+
+### asset-map Examples
+
+Single artifact:
+
+```text
+default=myapp-{{version}}.zip
+```
+
+Glob for architecture suffix:
+
+```text
+darwin=myapp-{{version}}-darwin-*.zip
+```
 
 ## Example: direct mode
+
+The workflow below uses one asset key (`default`), so a matching template can use `artifact.*`.
 
 ```yaml
 name: update-tap-direct
@@ -68,6 +169,8 @@ jobs:
 ```
 
 ## Example: pull request mode
+
+The workflow below uses multiple asset keys, so the template should use `artifacts.<key>.*`.
 
 ```yaml
 name: update-tap-pr
@@ -133,17 +236,6 @@ This repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end
 - Store the target tap repository token in a source-repository secret.
   - Default secret name: `BREW_UP_TARGET_REPO_TOKEN`
   - Override secret name with the `target-repo-token-secret-name` input
-
-`asset-map` expects newline-delimited `key=pattern` entries. Examples:
-
-```text
-default=myapp-{{version}}.zip
-```
-
-```text
-darwin_arm64=myapp-{{version}}-darwin-arm64.zip
-darwin_amd64=myapp-{{version}}-darwin-amd64.zip
-```
 
 Use `dry-run=true` first, then run with `dry-run=false` when ready.
 
