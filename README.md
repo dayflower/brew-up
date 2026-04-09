@@ -126,9 +126,24 @@ jobs:
 
 This repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end validation across a source repository and a target tap repository.
 
-- Trigger with `workflow_dispatch`
-- Provide runtime inputs such as release/tag and `asset-map`
-- Store the target tap repository token in `secrets.BREW_UP_TARGET_REPO_TOKEN`
+- Trigger with `workflow_dispatch` in the source repository.
+- Ensure the source repository has both:
+  - a template file (for example `.github/homebrew/brew-up-smoke.rb.mustache`)
+  - a GitHub Release that already contains assets matching your `asset-map` patterns
+- Store the target tap repository token in a source-repository secret.
+  - Default secret name: `BREW_UP_TARGET_REPO_TOKEN`
+  - Override secret name with the `target-repo-token-secret-name` input
+
+`asset-map` expects newline-delimited `key=pattern` entries. Examples:
+
+```text
+default=myapp-{{version}}.zip
+```
+
+```text
+darwin_arm64=myapp-{{version}}-darwin-arm64.zip
+darwin_amd64=myapp-{{version}}-darwin-amd64.zip
+```
 
 Use `dry-run=true` first, then run with `dry-run=false` when ready.
 
