@@ -165,6 +165,9 @@ export async function run(): Promise<void> {
       return;
     }
     if (skipReason === "dry-run") {
+      core.info("----- DRY RUN RENDERED OUTPUT START -----");
+      core.info(renderedOutput);
+      core.info("----- DRY RUN RENDERED OUTPUT END -----");
       core.info("Dry run enabled; skipping publish.");
       await writeWorkflowSummary(summaryBase);
       return;
