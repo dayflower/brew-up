@@ -225,9 +225,13 @@ jobs:
           publish-mode: pr-auto-merge
 ```
 
-## Smoke workflow
+## Development
 
-This repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end validation across a source repository and a target tap repository.
+### Maintainer Smoke Workflow
+
+This section is for `brew-up` maintainers and contributors who need manual end-to-end validation of changes. It is not part of the standard user setup for this action.
+
+The repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end validation across a source repository and a target tap repository.
 
 - Trigger with `workflow_dispatch` in the source repository.
 - Ensure the source repository has both:
