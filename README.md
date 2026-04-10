@@ -49,6 +49,7 @@ When `changed=false` and `only-if-changed=true`, commit- and PR-related outputs 
 The template engine is [Mustache](https://mustache.github.io/) (`{{...}}` placeholders).
 
 - Dot notation is supported (for example: `{{artifacts.default.sha256}}`).
+- Variables are rendered as raw text (HTML escaping is disabled).
 - If the template references unknown variables, the action fails.
 - If rendered output still contains unresolved placeholders, the action fails.
 

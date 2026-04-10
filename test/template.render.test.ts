@@ -60,6 +60,18 @@ describe("renderTemplate", () => {
     );
   });
 
+  it("does not HTML-escape rendered variable values", async () => {
+    const templatePath = await writeTemplate("{{artifact.url}}");
+
+    const rendered = await renderTemplate(
+      templatePath,
+      releaseVariables,
+      checksummedArtifacts,
+    );
+
+    expect(rendered).toBe("https://example.test/app.zip");
+  });
+
   it("fails when template references unknown variable", async () => {
     const templatePath = await writeTemplate("{{unknown.value}}");
 
