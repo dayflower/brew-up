@@ -99,7 +99,9 @@ export async function renderTemplate(
     );
   }
 
-  const rendered = Mustache.render(template, context);
+  const rendered = Mustache.render(template, context, undefined, {
+    escape: (value) => String(value),
+  });
   const unresolvedAfterRender = [
     ...new Set(rendered.matchAll(PLACEHOLDER_PATTERN)),
   ]
