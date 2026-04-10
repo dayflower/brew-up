@@ -29,6 +29,8 @@ export async function writeWorkflowSummary(input: SummaryInput): Promise<void> {
     true,
   );
   summary.addRaw(`Changed: \`${String(input.changed)}\`\n\n`, true);
+  summary.addRaw("Rendered output:\n\n", true);
+  summary.addRaw(`\`\`\`\`text\n${input.renderedOutput}\n\`\`\`\`\n\n`, true);
 
   if (input.onlyIfChanged && !input.changed) {
     summary.addRaw(
