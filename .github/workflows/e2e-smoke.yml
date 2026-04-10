@@ -88,6 +88,8 @@ jobs:
 
       - name: Run brew-up e2e smoke
         uses: ./
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           release-id: ${{ inputs.release-id }}
           release-tag: ${{ inputs.release-tag }}
