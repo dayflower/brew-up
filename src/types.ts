@@ -116,6 +116,7 @@ export interface PublishOutcome {
 export interface SummaryInput {
   release: Pick<ResolvedRelease, "id" | "tagName" | "name" | "url">;
   resolvedArtifacts: ResolvedArtifacts;
+  renderedOutput: string;
   checksumSource: "asset" | "download";
   changed: boolean;
   publishMode: PublishMode;

@@ -60,6 +60,7 @@ function decidePublishSkipReason(input: {
 function buildSummaryInput(input: {
   release: SummaryInput["release"];
   resolvedArtifacts: SummaryInput["resolvedArtifacts"];
+  renderedOutput: SummaryInput["renderedOutput"];
   checksumSource: SummaryInput["checksumSource"];
   changed: boolean;
   publishMode: SummaryInput["publishMode"];
@@ -70,6 +71,7 @@ function buildSummaryInput(input: {
   return {
     release: input.release,
     resolvedArtifacts: input.resolvedArtifacts,
+    renderedOutput: input.renderedOutput,
     checksumSource: input.checksumSource,
     changed: input.changed,
     publishMode: input.publishMode,
@@ -147,6 +149,7 @@ export async function run(): Promise<void> {
     const summaryBase = buildSummaryInput({
       release,
       resolvedArtifacts: checksummed,
+      renderedOutput,
       checksumSource: config.checksumAsset ? "asset" : "download",
       changed: change.changed,
       publishMode: config.publishMode,
@@ -165,9 +168,6 @@ export async function run(): Promise<void> {
       return;
     }
     if (skipReason === "dry-run") {
-      core.info("----- DRY RUN RENDERED OUTPUT START -----");
-      core.info(renderedOutput);
-      core.info("----- DRY RUN RENDERED OUTPUT END -----");
       core.info("Dry run enabled; skipping publish.");
       await writeWorkflowSummary(summaryBase);
       return;

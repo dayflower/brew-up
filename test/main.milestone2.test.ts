@@ -211,14 +211,11 @@ describe("run milestone 4", () => {
         releaseId: 123,
         releaseTag: "v1.2.3",
       });
-      expect(coreMock.info).toHaveBeenCalledWith(
-        "----- DRY RUN RENDERED OUTPUT START -----",
+      expect(outputSummaryMock.writeWorkflowSummary).toHaveBeenCalledWith(
+        expect.objectContaining({
+          renderedOutput: "rendered",
+        }),
       );
-      expect(coreMock.info).toHaveBeenCalledWith("rendered");
-      expect(coreMock.info).toHaveBeenCalledWith(
-        "----- DRY RUN RENDERED OUTPUT END -----",
-      );
-      expect(outputSummaryMock.writeWorkflowSummary).toHaveBeenCalled();
       expect(coreMock.setFailed).not.toHaveBeenCalled();
     });
 
@@ -237,6 +234,7 @@ describe("run milestone 4", () => {
         expect.objectContaining({
           changed: false,
           onlyIfChanged: true,
+          renderedOutput: "rendered",
         }),
       );
       expect(coreMock.setFailed).not.toHaveBeenCalled();
