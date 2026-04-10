@@ -4,40 +4,45 @@ on:
   workflow_dispatch:
     inputs:
       release-id:
-        description: "Optional release ID"
+        description: "Optional release ID in the source repository"
         required: false
         type: string
       release-tag:
-        description: "Optional release tag"
+        description: "Optional release tag in the source repository"
         required: false
         type: string
       template-path:
-        description: "Template path in repository A"
+        description: "Template path in the source repository"
         required: true
         type: string
       output-path:
-        description: "Output path in repository B"
+        description: "Output path in the target tap repository"
         required: true
         type: string
       asset-map:
-        description: "Newline-delimited key=pattern"
+        description: "asset-map input: newline-delimited key=pattern entries"
         required: true
         type: string
       checksum-asset:
-        description: "Optional checksum asset name"
+        description: "Optional checksum asset filename in the source release"
         required: false
         type: string
       target-repo:
-        description: "Target repository owner/name"
+        description: "Target tap repository in owner/name format"
         required: true
         type: string
       target-branch:
-        description: "Target branch"
+        description: "Target branch in the target tap repository"
         required: true
         default: "main"
         type: string
+      target-repo-token-secret-name:
+        description: "Name of the source-repository secret that stores the target repository token"
+        required: true
+        default: "BREW_UP_TARGET_REPO_TOKEN"
+        type: string
       publish-mode:
-        description: "direct, pr, or pr-auto-merge"
+        description: "Publish mode: direct, pr, or pr-auto-merge"
         required: true
         default: "pr"
         type: choice
@@ -54,7 +59,7 @@ on:
           - "true"
           - "false"
       dry-run:
-        description: "Resolve/render only"
+        description: "Resolve and render only (no target mutation)"
         required: true
         default: "true"
         type: choice
@@ -71,6 +76,16 @@ jobs:
       - name: Checkout source repository
         uses: actions/checkout@v4
 
+      - name: Validate target repository token secret
+        env:
+          TARGET_REPO_TOKEN: ${{ secrets[inputs.target-repo-token-secret-name] }}
+          TARGET_REPO_TOKEN_SECRET_NAME: ${{ inputs.target-repo-token-secret-name }}
+        run: |
+          if [ -z "$TARGET_REPO_TOKEN" ]; then
+            echo "::error::Secret '$TARGET_REPO_TOKEN_SECRET_NAME' is not set or is empty in the source repository."
+            exit 1
+          fi
+
       - name: Run brew-up e2e smoke
         uses: ./
         with:
@@ -82,7 +97,7 @@ jobs:
           checksum-asset: ${{ inputs.checksum-asset }}
           target-repo: ${{ inputs.target-repo }}
           target-branch: ${{ inputs.target-branch }}
-          target-repo-token: ${{ secrets.BREW_UP_TARGET_REPO_TOKEN }}
+          target-repo-token: ${{ secrets[inputs.target-repo-token-secret-name] }}
           publish-mode: ${{ inputs.publish-mode }}
           only-if-changed: ${{ inputs.only-if-changed }}
           dry-run: ${{ inputs.dry-run }}
