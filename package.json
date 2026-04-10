@@ -7,6 +7,8 @@
   "main": "lib/main.mjs",
   "scripts": {
     "check": "npm run format:check && npm run lint && npm run test",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "prepare": "npm run hooks:install",
     "build": "tsdown --config tsdown.config.ts",
     "format": "biome format --write src test",
     "format:check": "biome format src test",
