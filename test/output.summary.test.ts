@@ -34,7 +34,7 @@ function makeInput(overrides: Partial<SummaryInput> = {}): SummaryInput {
         },
       },
     },
-    renderedOutput: "cask \"app\" do\n  version \"1.2.3\"\nend",
+    renderedOutput: 'cask "app" do\n  version "1.2.3"\nend',
     checksumSource: "asset",
     changed: true,
     publishMode: "pr",
@@ -75,7 +75,7 @@ describe("writeWorkflowSummary", () => {
       true,
     );
     expect(coreMock.summary.addRaw).toHaveBeenCalledWith(
-      expect.stringContaining("````text\ncask \"app\" do"),
+      expect.stringContaining('````text\ncask "app" do'),
       true,
     );
     expect(coreMock.summary.addTable).toHaveBeenCalled();
