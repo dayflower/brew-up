@@ -47,7 +47,7 @@ inputs:
     required: false
 runs:
   using: 'node24'
-  main: 'lib/main.mjs'
+  main: 'dist/main.mjs'
 outputs:
   changed:
     description: 'Whether the generated output differs from target content'
