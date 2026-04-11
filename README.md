@@ -7,10 +7,50 @@ It resolves one release, maps release assets, injects SHA-256 checksums, and sup
 ## Requirements
 
 - GitHub Actions workflow runs in the source repository after release assets are available.
-- `target-repo-token` can write to the target tap repository.
+- `target-repo-token` can write to the target tap repository (see [Token Setup](#token-setup)).
 - `GITHUB_TOKEN` is available for reading release metadata in the source repository.
 
-For `pr-auto-merge`, the token for the target tap repository must also be allowed to create pull requests and enable auto-merge.
+For `pr-auto-merge`, the target repository must allow auto-merge and merge commits (see [Auto-merge requirements](#auto-merge-requirements)).
+
+## Token Setup
+
+This action uses two tokens:
+
+- `GITHUB_TOKEN` for reading release metadata from the source repository.
+- `target-repo-token` for writing changes in the target tap repository.
+
+### Source repository token (`GITHUB_TOKEN`)
+
+Set job-level permissions to allow release metadata reads:
+
+```yaml
+permissions:
+  contents: read
+```
+
+Pass `GITHUB_TOKEN` to the action step:
+
+```yaml
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+```
+
+### Target repository token (`target-repo-token`)
+
+Recommended: use a fine-grained personal access token (PAT) scoped to the target tap repository.
+
+1. Go to **Settings** -> **Developer settings** -> **Personal access tokens** -> **Fine-grained tokens**.
+2. Create a token with **Repository access** limited to the target tap repository.
+3. Set repository permissions:
+   - **Contents: Read and write**
+   - **Pull requests: Read and write**
+4. Store the token as a secret in the source repository (for example `TAP_REPO_TOKEN`).
+5. Pass it through `with.target-repo-token`.
+
+If you use a classic PAT:
+
+- For public target repositories, `public_repo` is typically sufficient.
+- For private target repositories, `repo` is required.
 
 ## Inputs
 
@@ -153,9 +193,13 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: dayflower/brew-up@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           release-tag: v1.2.3
           template-path: .github/homebrew/app.rb.mustache
@@ -182,9 +226,13 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: dayflower/brew-up@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           release-tag: v1.2.3
           template-path: .github/homebrew/app.rb.mustache
@@ -202,6 +250,8 @@ jobs:
 
 ## Example: pull request with auto-merge
 
+Before using this mode, confirm the target repository satisfies [Auto-merge requirements](#auto-merge-requirements).
+
 ```yaml
 name: update-tap-pr-auto-merge
 
@@ -211,9 +261,13 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: dayflower/brew-up@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           release-tag: v1.2.3
           template-path: .github/homebrew/app.rb.mustache
@@ -225,6 +279,25 @@ jobs:
           target-repo-token: ${{ secrets.TAP_REPO_TOKEN }}
           publish-mode: pr-auto-merge
 ```
+
+## Auto-merge requirements
+
+`publish-mode: pr-auto-merge` creates a pull request, then enables GitHub native auto-merge with merge method `MERGE`.
+
+GitHub documentation:
+
+- [Managing auto-merge for pull requests in your repository](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-auto-merge-for-pull-requests-in-your-repository)
+- [Automatically merging a pull request](https://docs.github.com/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/automatically-merging-a-pull-request)
+
+Confirm all of the following in the target repository:
+
+- Auto-merge is enabled in repository settings.
+- Merge commits are allowed (because this action requests `MERGE` method).
+- The identity behind `target-repo-token` has write access.
+- Branch protection and required checks are configured as needed.
+
+If required checks are not yet complete, GitHub keeps the PR in auto-merge waiting state.
+If auto-merge cannot be enabled, this action fails.
 
 ## Development
 
