@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "GitHub Action to update Homebrew tap files from release assets",
-  "main": "lib/main.mjs",
+  "main": "dist/main.mjs",
   "scripts": {
     "build": "tsdown --config tsdown.config.ts",
     "check": "biome check src test",

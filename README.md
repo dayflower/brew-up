@@ -321,7 +321,7 @@ Do not edit `package.json` manually for releases.
    npm run release:preflight
    ```
 
-   This runs `check`, `test`, and `build`, and fails if `lib/main.mjs` changes after build.
+   This runs `check`, `test`, and `build`, and fails if `dist/main.mjs` changes after build.
 
 4. Create and push release tags:
 

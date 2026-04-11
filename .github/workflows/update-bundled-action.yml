@@ -44,4 +44,4 @@ jobs:
           body: |
             This PR updates the generated JavaScript bundle for the GitHub Action.
           add-paths: |
-            lib/main.mjs
+            dist/main.mjs

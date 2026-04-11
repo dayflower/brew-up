@@ -41,8 +41,8 @@ run_preflight_checks() {
   npm run test
   npm run build
 
-  if ! git diff --quiet -- lib/main.mjs; then
-    echo "lib/main.mjs changed after build. Commit generated output before release." >&2
+  if ! git diff --quiet -- dist/main.mjs; then
+    echo "dist/main.mjs changed after build. Commit generated output before release." >&2
     exit 1
   fi
 }
