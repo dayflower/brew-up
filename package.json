@@ -10,6 +10,9 @@
     "check": "biome check src test",
     "fix": "biome check --write src test",
     "test": "vitest run",
+    "release:preflight": "./scripts/release.sh preflight",
+    "release:tag": "./scripts/release.sh tag",
+    "release:tag:push": "./scripts/release.sh tag --push",
     "hooks:install": "git config core.hooksPath .githooks",
     "prepare": "npm run hooks:install"
   },
