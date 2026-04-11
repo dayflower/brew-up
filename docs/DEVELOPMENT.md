@@ -22,7 +22,7 @@ Do not edit `package.json` manually for releases.
 
    This runs `check`, `test`, and `build`, and fails if `dist/main.mjs` changes after build.
 
-4. Create and push release tags:
+4. Create and push release tags, then create GitHub Release:
 
    ```bash
    npm run release:tag:push
@@ -31,8 +31,7 @@ Do not edit `package.json` manually for releases.
    This creates:
    - immutable tag: `vX.Y.Z` (from `package.json` version)
    - moving major tag: `vX` (force-updated to the same commit)
-
-5. Create a GitHub Release from `vX.Y.Z`.
+   - GitHub Release: `vX.Y.Z` (with auto-generated notes)
 
 ## Maintainer Smoke Workflow
 
