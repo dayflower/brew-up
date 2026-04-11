@@ -6,15 +6,12 @@
   "description": "GitHub Action to update Homebrew tap files from release assets",
   "main": "lib/main.mjs",
   "scripts": {
-    "check": "npm run format:check && npm run lint && npm run test",
-    "hooks:install": "git config core.hooksPath .githooks",
-    "prepare": "npm run hooks:install",
     "build": "tsdown --config tsdown.config.ts",
-    "format": "biome format --write src test",
-    "format:check": "biome format src test",
-    "lint": "biome lint src test",
-    "lint:fix": "biome check --write src test",
-    "test": "vitest run"
+    "check": "biome check src test",
+    "fix": "biome check --write src test",
+    "test": "vitest run",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "prepare": "npm run hooks:install"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
