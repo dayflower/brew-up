@@ -301,6 +301,40 @@ If auto-merge cannot be enabled, this action fails.
 
 ## Development
 
+### Release Playbook
+
+Use `package.json` as the single source of truth for release versioning.
+Do not edit `package.json` manually for releases.
+
+1. Bump version with npm (this updates both `package.json` and `package-lock.json`):
+
+   ```bash
+   npm version patch --no-git-tag-version
+   ```
+
+   Replace `patch` with `minor` or `major` when needed.
+
+2. Commit the version bump and related changes.
+3. Run preflight checks:
+
+   ```bash
+   npm run release:preflight
+   ```
+
+   This runs `check`, `test`, and `build`, and fails if `lib/main.mjs` changes after build.
+
+4. Create and push release tags:
+
+   ```bash
+   npm run release:tag:push
+   ```
+
+   This creates:
+   - immutable tag: `vX.Y.Z` (from `package.json` version)
+   - moving major tag: `vX` (force-updated to the same commit)
+
+5. Create a GitHub Release from `vX.Y.Z`.
+
 ### Maintainer Smoke Workflow
 
 This section is for `brew-up` maintainers and contributors who need manual end-to-end validation of changes. It is not part of the standard user setup for this action.
