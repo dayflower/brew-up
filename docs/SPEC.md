@@ -7,21 +7,21 @@ It is intended for workflows where an application repository publishes release a
 
 This specification uses the following terms:
 
-- repository A: the source repository that contains the macOS application code, release workflow, and file template
-- repository B: the target repository that contains Homebrew tap files such as Casks or Formulae
+- source repository: the source repository that contains the macOS application code, release workflow, and file template
+- tap repository: the target repository that contains Homebrew tap files such as Casks or Formulae
 
-The action runs from repository A.
-It generates a single output file from a template stored in repository A, then writes that file into repository B.
+The action runs from source repository.
+It generates a single output file from a template stored in source repository, then writes that file into tap repository.
 
-The action is intended to be used after a GitHub Release in repository A has already been created and populated with release assets.
+The action is intended to be used after a GitHub Release in source repository has already been created and populated with release assets.
 
 ## Goals
 
-- Generate one file from a template checked out in repository A.
-- Resolve release assets from a GitHub Release in repository A.
+- Generate one file from a template checked out in source repository.
+- Resolve release assets from a GitHub Release in source repository.
 - Inject asset URLs and SHA-256 checksums into template variables.
 - Support both single-artifact and multi-artifact layouts.
-- Write the generated file into repository B.
+- Write the generated file into tap repository.
 - Support direct push, pull request creation, and pull request with auto-merge.
 - Avoid creating commits or pull requests when the generated file is unchanged.
 - Support dry-run execution.
@@ -40,14 +40,14 @@ The action is a JavaScript GitHub Action implemented in TypeScript.
 
 It assumes:
 
-- repository A has already been checked out in the workflow workspace.
-- the template file is available in the checked-out contents of repository A.
-- a GitHub Release already exists in repository A.
-- repository B can be accessed using a user-provided token, typically from GitHub Actions secrets.
+- source repository has already been checked out in the workflow workspace.
+- the template file is available in the checked-out contents of source repository.
+- a GitHub Release already exists in source repository.
+- tap repository can be accessed using a user-provided token, typically from GitHub Actions secrets.
 
 ## Release Resolution
 
-The action supports multiple ways to identify the release in repository A.
+The action supports multiple ways to identify the release in source repository.
 
 ### Inputs
 
@@ -72,7 +72,7 @@ They are not treated differently by the action, as long as the release can be re
 
 ## Template Model
 
-The action reads a single template file from repository A and renders one output file.
+The action reads a single template file from source repository and renders one output file.
 
 ### Template Engine
 
@@ -81,8 +81,8 @@ The template itself may contain static text blocks for platform-specific section
 
 ### Inputs
 
-- `template-path`: path to the template file in repository A
-- `output-path`: path to the generated file in repository B
+- `template-path`: path to the template file in source repository
+- `output-path`: path to the generated file in tap repository
 
 ## Artifact Resolution
 
@@ -186,13 +186,13 @@ If and only if exactly one artifact key exists:
 
 ## Target Repository Writeback
 
-The action writes the generated file into repository B.
+The action writes the generated file into tap repository.
 
 ### Inputs
 
-- `target-repo`: repository B in `owner/name` format
-- `target-branch`: target branch in repository B, typically `main`
-- `target-repo-token`: token used to write to repository B
+- `target-repo`: tap repository in `owner/name` format
+- `target-branch`: target branch in tap repository, typically `main`
+- `target-repo-token`: token used to write to tap repository
 
 Supported token types:
 
@@ -224,17 +224,17 @@ Allowed values:
 ### `direct`
 
 - Commit the generated file directly to `target-branch`
-- Push directly to repository B
+- Push directly to tap repository
 
 ### `pr`
 
-- Create a working branch in repository B
+- Create a working branch in tap repository
 - Commit and push the generated file to that branch
 - Open a pull request targeting `target-branch`
 
 ### `pr-auto-merge`
 
-- Create a working branch in repository B
+- Create a working branch in tap repository
 - Commit and push the generated file to that branch
 - Open a pull request targeting `target-branch`
 - Enable GitHub auto-merge for that pull request
@@ -259,7 +259,7 @@ This design is preferred because it works more cleanly with branch protection, r
 
 ### Behavior
 
-- The action checks whether the generated file differs from the current file in repository B.
+- The action checks whether the generated file differs from the current file in tap repository.
 - If there is no content change and `only-if-changed=true`, the action exits successfully without creating a commit, push, or pull request.
 - If there is a content change, normal publishing behavior continues.
 
@@ -312,7 +312,7 @@ The action must fail in the following cases:
 - a checksum required for a resolved artifact cannot be found in the checksum asset
 - template rendering leaves unresolved variables
 - `publish-mode` is invalid
-- repository B cannot be accessed or updated as required
+- tap repository cannot be accessed or updated as required
 - auto-merge cannot be enabled in `pr-auto-merge` mode
 
 ## Recommended Outputs
@@ -330,7 +330,7 @@ Recommended outputs:
 
 ## Recommended Operational Behavior
 
-- Validate all required inputs before mutating repository B.
+- Validate all required inputs before mutating tap repository.
 - Emit a workflow summary describing:
   - resolved release
   - resolved asset names
@@ -344,11 +344,11 @@ Recommended outputs:
 ## Example High-Level Flow
 
 1. Resolve release from explicit input or event context.
-2. Fetch release asset metadata from repository A.
+2. Fetch release asset metadata from source repository.
 3. Resolve each `asset-map` entry to exactly one asset.
 4. Resolve SHA-256 values from `checksum-asset` or direct downloads.
-5. Render the template from repository A.
-6. Check out repository B.
+5. Render the template from source repository.
+6. Check out tap repository.
 7. Compare rendered output with the existing target file.
 8. If unchanged and `only-if-changed=true`, exit successfully.
 9. If `dry-run=true`, exit successfully after reporting the planned result.

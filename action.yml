@@ -8,10 +8,10 @@ inputs:
     description: 'Release tag to resolve in source repository'
     required: false
   template-path:
-    description: 'Template file path in repository A'
+    description: 'Template file path in source repository'
     required: true
   output-path:
-    description: 'Output file path in repository B'
+    description: 'Output file path in tap repository'
     required: true
   asset-map:
     description: 'Newline-delimited key=value map for release assets'
@@ -20,13 +20,13 @@ inputs:
     description: 'Optional checksum asset filename'
     required: false
   target-repo:
-    description: 'Target repository in owner/name format'
+    description: 'Tap repository in owner/name format'
     required: true
   target-branch:
-    description: 'Target branch in repository B'
+    description: 'Target branch in tap repository'
     required: true
   target-repo-token:
-    description: 'Token used to access repository B'
+    description: 'Token used to access tap repository'
     required: true
   publish-mode:
     description: 'Publish mode: direct, pr, or pr-auto-merge'
@@ -36,7 +36,7 @@ inputs:
     required: false
     default: 'true'
   dry-run:
-    description: 'Run without mutating repository B'
+    description: 'Run without mutating tap repository'
     required: false
     default: 'false'
   commit-author-name:
