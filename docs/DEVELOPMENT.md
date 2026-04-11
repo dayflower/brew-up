@@ -6,12 +6,23 @@ Use `package.json` as the single source of truth for release versioning.
 Do not edit `package.json` manually for releases.
 This repository uses branch protection on `main`; release tags must be created from merged `main` commits.
 
-1. Create a release prep branch from the latest `main`:
+For steps 1-3, you can use the helper command:
+
+```bash
+npm run release:prep -- patch
+```
+
+Replace `patch` with `minor` or `major` when needed.
+This helper checks `main`, ensures the working tree is clean, verifies `main` matches `origin/main`, bumps version, creates `release/vX.Y.Z`, and commits the bump.
+Push and PR creation are still manual.
+
+If you need to run the steps manually:
+
+1. Sync to the latest `main`:
 
    ```bash
    git switch main
    git pull --ff-only origin main
-   git switch -c release/vX.Y.Z
    ```
 
 2. Bump version with npm (this updates both `package.json` and `package-lock.json`):
@@ -22,7 +33,7 @@ This repository uses branch protection on `main`; release tags must be created f
 
    Replace `patch` with `minor` or `major` when needed.
 
-3. Commit the version bump and open a pull request to `main`.
+3. Create `release/vX.Y.Z`, commit the version bump, and open a pull request to `main`.
 4. Merge the pull request after CI passes.
 5. If `update-bundled-action` opens a PR for `dist/main.mjs`, merge that PR too.
 6. Sync local `main` to the final merged state:
