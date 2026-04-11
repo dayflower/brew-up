@@ -21,7 +21,7 @@ function getGitHubToken(): string {
   if (!token) {
     throw new BrewUpError(
       "INVALID_INPUT",
-      "GITHUB_TOKEN environment variable is required for release resolution in repository A.",
+      "GITHUB_TOKEN environment variable is required for release resolution in source repository.",
     );
   }
 

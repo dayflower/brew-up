@@ -4,11 +4,11 @@
 
 This plan implements a TypeScript-based JavaScript GitHub Action that:
 
-- runs in repository A,
-- resolves one release from repository A,
+- runs in source repository,
+- resolves one release from source repository,
 - resolves release assets and SHA-256 checksums,
 - renders one file from one template,
-- writes the result to repository B,
+- writes the result to tap repository,
 - supports `direct`, `pr`, and `pr-auto-merge` publish modes,
 - skips write operations when output is unchanged,
 - supports `dry-run` mode,
@@ -40,7 +40,7 @@ Implement the action as a pipeline of isolated modules with a thin orchestration
 - `src/checksum/from-asset.ts`: checksum lookup from `checksum-asset`
 - `src/checksum/from-download.ts`: direct download + SHA-256 calculation
 - `src/template/render.ts`: logic-less template rendering + unresolved variable checks
-- `src/target/repo.ts`: checkout/access preparation for repository B
+- `src/target/repo.ts`: checkout/access preparation for tap repository
 - `src/target/change.ts`: file diff / changed detection
 - `src/target/publish-direct.ts`: direct commit and push flow
 - `src/target/publish-pr.ts`: branch, commit, push, PR creation
@@ -81,7 +81,7 @@ Keep side effects inside GitHub/repository modules; keep business logic pure whe
 - if one of `commit-author-name` / `commit-author-email` is set alone, fail (enforce paired behavior)
 - normalize booleans strictly (`true`/`false` semantics)
 
-Validation must complete before any mutation in repository B.
+Validation must complete before any mutation in tap repository.
 
 ## 4. Release and Asset Resolution Plan
 
@@ -144,18 +144,18 @@ No silent fallback from checksum-file mode to download mode.
 ## 6. Template Rendering Plan
 
 - use a logic-less template engine compatible with simple variable interpolation
-- render from `template-path` in repository A
+- render from `template-path` in source repository
 - detect unresolved placeholders after rendering and fail if any remain
 - write rendered content to in-memory buffer first (do not mutate target yet)
 
 Template context includes release variables, `artifacts.*`, and optional `artifact.*` alias.
 
-## 7. Target Repository and Publish Plan
+## 7. Tap Repository and Publish Plan
 
-### 7.1 Repository B access
+### 7.1 Tap repository access
 
 - authenticate with `target-repo-token`
-- checkout or clone repository B into a dedicated workspace path
+- checkout or clone tap repository into a dedicated workspace path
 - checkout `target-branch` or fail if inaccessible
 
 ### 7.2 Change detection
