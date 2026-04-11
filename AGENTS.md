@@ -7,12 +7,9 @@ It resolves a release, maps assets, injects checksums, and writes the rendered o
 ## Setup and Commands
 - `npm install`
 - `npm run build`
-- `npm run test`
-- `npm run lint`
-- `npm run lint:fix`
-- `npm run format`
-- `npm run format:check`
 - `npm run check`
+- `npm run fix`
+- `npm run test`
 
 ## Source of Truth
 - Specification: `docs/SPEC.md`
@@ -24,8 +21,8 @@ It resolves a release, maps assets, injects checksums, and writes the rendered o
 - Preserve existing project style and conventions.
 - Avoid unnecessary large refactors.
 - Keep changes tightly scoped to the task objective.
-- Prefer `npm run lint:fix` when automatic fixes are needed.
-- Use `npm run format` for formatting and `npm run format:check` for CI/verification.
+- Prefer `npm run fix` when automatic fixes are needed.
+- Use `npm run check` for CI/verification.
 
 ## Commit Rule
 - Commit message must be a single-line title.

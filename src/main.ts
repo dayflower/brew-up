@@ -9,11 +9,11 @@ import { resolveArtifacts } from "./github/assets.js";
 import { resolveRelease } from "./github/release.js";
 import { setBaseOutputs, setPublishOutputs } from "./output/result.js";
 import { writeWorkflowSummary } from "./output/summary.js";
-import { renderTemplate } from "./template/render.js";
 import { enableAutoMerge } from "./target/auto-merge.js";
 import { detectChange } from "./target/change.js";
 import { publishDirect } from "./target/publish-direct.js";
 import { publishPr } from "./target/publish-pr.js";
+import { renderTemplate } from "./template/render.js";
 import type { PublishOutcome, SummaryInput } from "./types.js";
 
 function getGitHubToken(): string {
