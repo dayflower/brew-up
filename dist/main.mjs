@@ -20548,7 +20548,7 @@ async function renderTemplate(templatePath, releaseVariables, resolvedArtifacts)
 //#region src/main.ts
 function getGitHubToken() {
 	const token = process.env.GITHUB_TOKEN?.trim();
-	if (!token) throw new BrewUpError("INVALID_INPUT", "GITHUB_TOKEN environment variable is required for release resolution in repository A.");
+	if (!token) throw new BrewUpError("INVALID_INPUT", "GITHUB_TOKEN environment variable is required for release resolution in source repository.");
 	return token;
 }
 function getRunId() {
