@@ -4,8 +4,28 @@
 
 Use `package.json` as the single source of truth for release versioning.
 Do not edit `package.json` manually for releases.
+This repository uses branch protection on `main`; release tags must be created from merged `main` commits.
 
-1. Bump version with npm (this updates both `package.json` and `package-lock.json`):
+For steps 1-3, you can use the helper command:
+
+```bash
+npm run release:prep -- patch
+```
+
+Replace `patch` with `minor` or `major` when needed.
+This helper checks `main`, ensures the working tree is clean, verifies `main` matches `origin/main`, bumps version, creates `release/vX.Y.Z`, and commits the bump.
+Push and PR creation are still manual.
+
+If you need to run the steps manually:
+
+1. Sync to the latest `main`:
+
+   ```bash
+   git switch main
+   git pull --ff-only origin main
+   ```
+
+2. Bump version with npm (this updates both `package.json` and `package-lock.json`):
 
    ```bash
    npm version patch --no-git-tag-version
@@ -13,8 +33,17 @@ Do not edit `package.json` manually for releases.
 
    Replace `patch` with `minor` or `major` when needed.
 
-2. Commit the version bump and related changes.
-3. Run preflight checks:
+3. Create `release/vX.Y.Z`, commit the version bump, and open a pull request to `main`.
+4. Merge the pull request after CI passes.
+5. If `update-bundled-action` opens a PR for `dist/main.mjs`, merge that PR too.
+6. Sync local `main` to the final merged state:
+
+   ```bash
+   git switch main
+   git pull --ff-only origin main
+   ```
+
+7. Run preflight checks on `main`:
 
    ```bash
    npm run release:preflight
@@ -22,7 +51,7 @@ Do not edit `package.json` manually for releases.
 
    This runs `check`, `test`, and `build`, and fails if `dist/main.mjs` changes after build.
 
-4. Create and push release tags, then create GitHub Release:
+8. Create and push release tags, then create GitHub Release from `main`:
 
    ```bash
    npm run release:tag:push
