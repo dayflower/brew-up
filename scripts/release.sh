@@ -22,6 +22,7 @@ done
 
 if [[ "$MODE" != "preflight" && "$MODE" != "tag" ]]; then
   echo "Usage: ./scripts/release.sh [preflight|tag] [--push] [--skip-checks]" >&2
+  echo "  --push: push tags and create GitHub Release for vX.Y.Z" >&2
   exit 1
 fi
 
@@ -59,6 +60,30 @@ ensure_tag_not_exists() {
   fi
 }
 
+ensure_gh_cli_ready() {
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "gh CLI is required for --push mode to create a GitHub Release." >&2
+    exit 1
+  fi
+
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "gh CLI is not authenticated. Run 'gh auth login' and try again." >&2
+    exit 1
+  fi
+}
+
+ensure_release_not_exists() {
+  if gh release view "${VERSION_TAG}" >/dev/null 2>&1; then
+    echo "GitHub Release ${VERSION_TAG} already exists." >&2
+    exit 1
+  fi
+}
+
+create_github_release() {
+  echo "Creating GitHub Release ${VERSION_TAG} with auto-generated notes..."
+  gh release create "${VERSION_TAG}" --generate-notes
+}
+
 print_summary() {
   echo "Version: ${VERSION}"
   echo "Immutable tag: ${VERSION_TAG}"
@@ -80,6 +105,11 @@ fi
 
 ensure_tag_not_exists
 
+if [[ "$PUSH_TAGS" == "true" ]]; then
+  ensure_gh_cli_ready
+  ensure_release_not_exists
+fi
+
 git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG}"
 git tag -fa "${MAJOR_TAG}" -m "Release ${VERSION_TAG}"
 
@@ -87,9 +117,11 @@ if [[ "$PUSH_TAGS" == "true" ]]; then
   git push origin "${VERSION_TAG}"
   git push origin "${MAJOR_TAG}" --force
   echo "Pushed tags: ${VERSION_TAG}, ${MAJOR_TAG}"
+  create_github_release
 else
   echo "Created tags locally."
   echo "Push with:"
+  echo "  # --push mode also creates GitHub Release ${VERSION_TAG}"
   echo "  git push origin ${VERSION_TAG}"
   echo "  git push origin ${MAJOR_TAG} --force"
 fi
