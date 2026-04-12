@@ -1,6 +1,9 @@
 import { BrewUpError } from "../errors.js";
 import type { PublishDirectResult, ValidatedInputs } from "../types.js";
-import { buildFileWriteRequest } from "./publish-shared.js";
+import {
+  buildFileWriteRequest,
+  type PublishMessageVariables,
+} from "./publish-shared.js";
 
 interface CreateOrUpdateFileResponse {
   commit?: {
@@ -22,10 +25,18 @@ export async function publishDirect(
   client: TargetRepoWriter,
   config: Pick<
     ValidatedInputs,
-    "outputPath" | "targetRepo" | "targetBranch" | "commitAuthor"
+    | "outputPath"
+    | "targetRepo"
+    | "targetBranch"
+    | "commitAuthor"
+    | "publishMessageTemplate"
   >,
   renderedOutput: string,
-  options: { currentSha?: string; releaseTag: string },
+  options: {
+    currentSha?: string;
+    releaseTag: string;
+    messageVariables: PublishMessageVariables;
+  },
 ): Promise<PublishDirectResult> {
   try {
     const response = await client.rest.repos.createOrUpdateFileContents(

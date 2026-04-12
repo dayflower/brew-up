@@ -1,6 +1,10 @@
 import { BrewUpError } from "../errors.js";
 import type { PublishPrResult, ValidatedInputs } from "../types.js";
-import { buildCommitMessage, buildFileWriteRequest } from "./publish-shared.js";
+import {
+  buildFileWriteRequest,
+  buildPublishMessage,
+  type PublishMessageVariables,
+} from "./publish-shared.js";
 
 interface PullRequestResponse {
   number: number;
@@ -79,8 +83,12 @@ interface PrPublishPlan {
 }
 
 function buildPrPublishPlan(
-  config: Pick<ValidatedInputs, "outputPath">,
-  options: Pick<{ releaseTag: string; runId: string }, "releaseTag" | "runId">,
+  config: Pick<ValidatedInputs, "outputPath" | "publishMessageTemplate">,
+  options: {
+    releaseTag: string;
+    runId: string;
+    messageVariables: PublishMessageVariables;
+  },
 ): PrPublishPlan {
   const branchName = buildBranchName(
     config.outputPath,
@@ -90,7 +98,10 @@ function buildPrPublishPlan(
   return {
     branchName,
     branchRef: `refs/heads/${branchName}`,
-    pullRequestTitle: buildCommitMessage(config.outputPath, options.releaseTag),
+    pullRequestTitle: buildPublishMessage(
+      config.publishMessageTemplate,
+      options.messageVariables,
+    ),
   };
 }
 
@@ -98,10 +109,19 @@ export async function publishPr(
   client: PullRequestWriter,
   config: Pick<
     ValidatedInputs,
-    "outputPath" | "targetRepo" | "targetBranch" | "commitAuthor"
+    | "outputPath"
+    | "targetRepo"
+    | "targetBranch"
+    | "commitAuthor"
+    | "publishMessageTemplate"
   >,
   renderedOutput: string,
-  options: { currentSha?: string; releaseTag: string; runId: string },
+  options: {
+    currentSha?: string;
+    releaseTag: string;
+    runId: string;
+    messageVariables: PublishMessageVariables;
+  },
 ): Promise<PublishPrResult> {
   const plan = buildPrPublishPlan(config, options);
 

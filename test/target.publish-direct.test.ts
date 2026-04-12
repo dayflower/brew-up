@@ -15,6 +15,7 @@ const baseConfig = {
   outputPath: "Casks/app.rb",
   targetRepo: { owner: "owner", name: "tap", fullName: "owner/tap" },
   targetBranch: "main",
+  publishMessageTemplate: "release {{tag_name}}",
 };
 
 describe("publishDirect", () => {
@@ -26,6 +27,13 @@ describe("publishDirect", () => {
 
     const result = await publishDirect(client, baseConfig, "rendered", {
       releaseTag: "v1.2.3",
+      messageVariables: {
+        version: "1.2.3",
+        tag_name: "v1.2.3",
+        release_id: "123",
+        release_name: "Release",
+        release_url: "https://example.test/release/123",
+      },
     });
 
     expect(result).toEqual({ commitSha: "commit123" });
@@ -36,6 +44,7 @@ describe("publishDirect", () => {
         path: "Casks/app.rb",
         branch: "main",
         sha: undefined,
+        message: "release v1.2.3",
       }),
     );
   });
@@ -49,6 +58,13 @@ describe("publishDirect", () => {
     await publishDirect(client, baseConfig, "rendered", {
       currentSha: "oldsha",
       releaseTag: "v1.2.3",
+      messageVariables: {
+        version: "1.2.3",
+        tag_name: "v1.2.3",
+        release_id: "123",
+        release_name: "Release",
+        release_url: "https://example.test/release/123",
+      },
     });
 
     expect(client.rest.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
@@ -76,6 +92,13 @@ describe("publishDirect", () => {
       "rendered",
       {
         releaseTag: "v1.2.3",
+        messageVariables: {
+          version: "1.2.3",
+          tag_name: "v1.2.3",
+          release_id: "123",
+          release_name: "Release",
+          release_url: "https://example.test/release/123",
+        },
       },
     );
 
@@ -96,7 +119,46 @@ describe("publishDirect", () => {
     await expect(
       publishDirect(client, baseConfig, "rendered", {
         releaseTag: "v1.2.3",
+        messageVariables: {
+          version: "1.2.3",
+          tag_name: "v1.2.3",
+          release_id: "123",
+          release_name: "Release",
+          release_url: "https://example.test/release/123",
+        },
       }),
     ).rejects.toThrow(/Failed to publish output file/);
+  });
+
+  it("replaces unknown template variables with UNKNOWN", async () => {
+    const client = makeClient();
+    client.rest.repos.createOrUpdateFileContents.mockResolvedValue({
+      data: { commit: { sha: "commit999" } },
+    });
+
+    await publishDirect(
+      client,
+      {
+        ...baseConfig,
+        publishMessageTemplate: "release {{tag_name}} {{unknown_value}}",
+      },
+      "rendered",
+      {
+        releaseTag: "v1.2.3",
+        messageVariables: {
+          version: "1.2.3",
+          tag_name: "v1.2.3",
+          release_id: "123",
+          release_name: "Release",
+          release_url: "https://example.test/release/123",
+        },
+      },
+    );
+
+    expect(client.rest.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "release v1.2.3 UNKNOWN",
+      }),
+    );
   });
 });

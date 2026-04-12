@@ -22,6 +22,7 @@ const baseConfig = {
   outputPath: "Casks/My App.rb",
   targetRepo: { owner: "owner", name: "tap", fullName: "owner/tap" },
   targetBranch: "main",
+  publishMessageTemplate: "release {{tag_name}}",
 };
 
 describe("publishPr", () => {
@@ -46,6 +47,13 @@ describe("publishPr", () => {
       currentSha: "file-sha",
       releaseTag: "v1.2.3",
       runId: "777",
+      messageVariables: {
+        version: "1.2.3",
+        tag_name: "v1.2.3",
+        release_id: "123",
+        release_name: "Release",
+        release_url: "https://example.test/release/123",
+      },
     });
 
     expect(client.rest.git.createRef).toHaveBeenCalledWith({
@@ -64,6 +72,7 @@ describe("publishPr", () => {
       expect.objectContaining({
         base: "main",
         head: "brew-up/my-app/v1.2.3-777",
+        title: "release v1.2.3",
       }),
     );
     expect(result).toEqual({
@@ -99,7 +108,17 @@ describe("publishPr", () => {
         commitAuthor: { name: "Alice", email: "alice@example.com" },
       },
       "rendered",
-      { releaseTag: "v1.2.3", runId: "777" },
+      {
+        releaseTag: "v1.2.3",
+        runId: "777",
+        messageVariables: {
+          version: "1.2.3",
+          tag_name: "v1.2.3",
+          release_id: "123",
+          release_name: "Release",
+          release_url: "https://example.test/release/123",
+        },
+      },
     );
 
     expect(client.rest.repos.createOrUpdateFileContents).toHaveBeenCalledWith(
@@ -118,7 +137,58 @@ describe("publishPr", () => {
       publishPr(client, baseConfig, "rendered", {
         releaseTag: "v1.2.3",
         runId: "777",
+        messageVariables: {
+          version: "1.2.3",
+          tag_name: "v1.2.3",
+          release_id: "123",
+          release_name: "Release",
+          release_url: "https://example.test/release/123",
+        },
       }),
     ).rejects.toThrow(/Failed to publish pull request/);
+  });
+
+  it("replaces unknown variables with UNKNOWN in PR title", async () => {
+    const client = makeClient();
+    client.rest.repos.getBranch.mockResolvedValue({
+      data: { commit: { sha: "base-sha" } },
+    });
+    client.rest.git.createRef.mockResolvedValue({});
+    client.rest.repos.createOrUpdateFileContents.mockResolvedValue({
+      data: { commit: { sha: "commit-sha" } },
+    });
+    client.rest.pulls.create.mockResolvedValue({
+      data: {
+        number: 13,
+        html_url: "https://example.test/pr/13",
+        node_id: "PR_node_13",
+      },
+    });
+
+    await publishPr(
+      client,
+      {
+        ...baseConfig,
+        publishMessageTemplate: "release {{tag_name}} {{missing_value}}",
+      },
+      "rendered",
+      {
+        releaseTag: "v1.2.3",
+        runId: "777",
+        messageVariables: {
+          version: "1.2.3",
+          tag_name: "v1.2.3",
+          release_id: "123",
+          release_name: "Release",
+          release_url: "https://example.test/release/123",
+        },
+      },
+    );
+
+    expect(client.rest.pulls.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "release v1.2.3 UNKNOWN",
+      }),
+    );
   });
 });

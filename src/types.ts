@@ -15,6 +15,7 @@ export interface RawInputs {
   dryRun: string;
   commitAuthorName: string;
   commitAuthorEmail: string;
+  publishMessageTemplate: string;
 }
 
 export interface AssetMapEntry {
@@ -43,6 +44,7 @@ export interface ValidatedInputs {
     name: string;
     email: string;
   };
+  publishMessageTemplate: string;
 }
 
 export interface SourceReleaseContext {

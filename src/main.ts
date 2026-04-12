@@ -183,6 +183,7 @@ export async function run(): Promise<void> {
         {
           currentSha: change.currentSha,
           releaseTag: release.tagName,
+          messageVariables: variables,
         },
       );
       publishOutcome = { commitSha: published.commitSha };
@@ -192,6 +193,7 @@ export async function run(): Promise<void> {
         currentSha: change.currentSha,
         releaseTag: release.tagName,
         runId: getRunId(),
+        messageVariables: variables,
       });
 
       publishOutcome = {

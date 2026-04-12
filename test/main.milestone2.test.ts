@@ -96,6 +96,7 @@ interface Fixtures {
     publishMode: "direct" | "pr" | "pr-auto-merge";
     onlyIfChanged: boolean;
     dryRun: boolean;
+    publishMessageTemplate: string;
   };
 }
 
@@ -117,6 +118,7 @@ function setupFixtures(
     dryRun: "false",
     commitAuthorName: "",
     commitAuthorEmail: "",
+    publishMessageTemplate: "",
   };
 
   const validatedInputs: Fixtures["validatedInputs"] = {
@@ -132,6 +134,7 @@ function setupFixtures(
     publishMode: "direct",
     onlyIfChanged: true,
     dryRun: false,
+    publishMessageTemplate: "brew-up: update Casks/app.rb for {{tag_name}}",
     ...overrides,
   };
 
@@ -259,6 +262,13 @@ describe("run milestone 4", () => {
         {
           currentSha: "abc",
           releaseTag: "v1.2.3",
+          messageVariables: {
+            version: "1.2.3",
+            tag_name: "v1.2.3",
+            release_id: "123",
+            release_name: "Release",
+            release_url: "https://example.test/release/123",
+          },
         },
       );
       expect(githubMock.getOctokit).toHaveBeenNthCalledWith(
@@ -293,6 +303,13 @@ describe("run milestone 4", () => {
         {
           currentSha: "abc",
           releaseTag: "v1.2.3",
+          messageVariables: {
+            version: "1.2.3",
+            tag_name: "v1.2.3",
+            release_id: "123",
+            release_name: "Release",
+            release_url: "https://example.test/release/123",
+          },
         },
       );
       expect(publishPrMock.publishPr).not.toHaveBeenCalled();
@@ -327,6 +344,13 @@ describe("run milestone 4", () => {
           currentSha: "abc",
           releaseTag: "v1.2.3",
           runId: "777",
+          messageVariables: {
+            version: "1.2.3",
+            tag_name: "v1.2.3",
+            release_id: "123",
+            release_name: "Release",
+            release_url: "https://example.test/release/123",
+          },
         },
       );
       expect(autoMergeMock.enableAutoMerge).not.toHaveBeenCalled();

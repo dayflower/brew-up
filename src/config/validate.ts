@@ -9,6 +9,10 @@ const VALID_PUBLISH_MODES = new Set<PublishMode>([
 ]);
 const TARGET_REPO_PATTERN = /^[^/\s]+\/[^/\s]+$/;
 
+function defaultPublishMessageTemplate(outputPath: string): string {
+  return `brew-up: update ${outputPath} for {{tag_name}}`;
+}
+
 function parseStrictBoolean(name: string, value: string): boolean {
   if (value === "true") {
     return true;
@@ -89,5 +93,8 @@ export function validateInputs(raw: RawInputs): ValidatedInputs {
           email: raw.commitAuthorEmail,
         }
       : undefined,
+    publishMessageTemplate:
+      raw.publishMessageTemplate ||
+      defaultPublishMessageTemplate(raw.outputPath),
   };
 }
