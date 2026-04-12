@@ -11,6 +11,18 @@ usage() {
   echo "Usage: ./scripts/release-prep.sh [major|minor|patch]" >&2
 }
 
+ensure_gh_cli_ready() {
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "gh CLI is required for release prep." >&2
+    exit 1
+  fi
+
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "gh CLI is not authenticated. Run 'gh auth login' and try again." >&2
+    exit 1
+  fi
+}
+
 if [[ "$LEVEL" != "major" && "$LEVEL" != "minor" && "$LEVEL" != "patch" ]]; then
   usage
   exit 1
@@ -26,6 +38,8 @@ if [[ -n "$(git status --porcelain)" ]]; then
   echo "Working tree must be clean (tracked/untracked changes are not allowed)." >&2
   exit 1
 fi
+
+ensure_gh_cli_ready
 
 git fetch origin main
 
@@ -60,7 +74,16 @@ git switch -c "$BRANCH_NAME"
 
 git add package.json package-lock.json
 git commit -m "chore: prepare release v${VERSION}"
+git push -u origin "$BRANCH_NAME"
+
+PR_TITLE="chore: prepare release v${VERSION}"
+PR_BODY="Automated release preparation for v${VERSION}."
+PR_URL="$(gh pr create --base main --head "$BRANCH_NAME" --title "$PR_TITLE" --body "$PR_BODY")"
+PR_NUMBER="$(gh pr view "$PR_URL" --json number --jq '.number')"
+
+gh pr merge --auto --merge "$PR_NUMBER"
 
 echo "Created branch: ${BRANCH_NAME}"
 echo "Created commit: chore: prepare release v${VERSION}"
-echo "Next: open a PR to main and merge it before tagging."
+echo "Created PR: ${PR_URL}"
+echo "Enabled auto-merge (merge commit): PR #${PR_NUMBER}"
