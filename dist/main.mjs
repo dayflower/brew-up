@@ -19553,7 +19553,8 @@ function readInputs(getInput) {
 		onlyIfChanged: readInput(getInput, "only-if-changed") || "true",
 		dryRun: readInput(getInput, "dry-run") || "false",
 		commitAuthorName: readInput(getInput, "commit-author-name"),
-		commitAuthorEmail: readInput(getInput, "commit-author-email")
+		commitAuthorEmail: readInput(getInput, "commit-author-email"),
+		publishMessageTemplate: readInput(getInput, "publish-message-template")
 	};
 }
 //#endregion
@@ -19631,6 +19632,9 @@ const VALID_PUBLISH_MODES = new Set([
 	"pr-auto-merge"
 ]);
 const TARGET_REPO_PATTERN = /^[^/\s]+\/[^/\s]+$/;
+function defaultPublishMessageTemplate(outputPath) {
+	return `brew-up: update ${outputPath} for {{tag_name}}`;
+}
 function parseStrictBoolean(name, value) {
 	if (value === "true") return true;
 	if (value === "false") return false;
@@ -19668,7 +19672,8 @@ function validateInputs(raw) {
 		commitAuthor: hasAuthorName ? {
 			name: raw.commitAuthorName,
 			email: raw.commitAuthorEmail
-		} : void 0
+		} : void 0,
+		publishMessageTemplate: raw.publishMessageTemplate || defaultPublishMessageTemplate(raw.outputPath)
 	};
 }
 //#endregion
@@ -19836,89 +19841,6 @@ async function detectChange(client, config, renderedOutput) {
 		if (isNotFoundError(error)) return { changed: true };
 		if (error instanceof BrewUpError) throw error;
 		throw new BrewUpError("TARGET_OUTPUT_READ_FAILED", `Failed to read target output file: ${config.outputPath}.`, error instanceof Error ? error.message : void 0);
-	}
-}
-//#endregion
-//#region src/target/publish-shared.ts
-function buildCommitMessage(outputPath, tagName) {
-	return `brew-up: update ${outputPath} for ${tagName}`;
-}
-function buildFileWriteRequest(config, branch, renderedOutput, options) {
-	return {
-		owner: config.targetRepo.owner,
-		repo: config.targetRepo.name,
-		path: config.outputPath,
-		branch,
-		message: buildCommitMessage(config.outputPath, options.releaseTag),
-		content: Buffer.from(renderedOutput, "utf8").toString("base64"),
-		sha: options.currentSha,
-		committer: config.commitAuthor,
-		author: config.commitAuthor
-	};
-}
-//#endregion
-//#region src/target/publish-direct.ts
-async function publishDirect(client, config, renderedOutput, options) {
-	try {
-		const commitSha = (await client.rest.repos.createOrUpdateFileContents(buildFileWriteRequest(config, config.targetBranch, renderedOutput, options))).data.commit?.sha;
-		if (!commitSha) throw new BrewUpError("TARGET_REPO_WRITE_FAILED", "Missing commit SHA from target repository write response.");
-		return { commitSha };
-	} catch (error) {
-		throw new BrewUpError("TARGET_REPO_WRITE_FAILED", `Failed to publish output file to ${config.targetRepo.fullName}:${config.outputPath}.`, error instanceof Error ? error.message : void 0);
-	}
-}
-//#endregion
-//#region src/target/publish-pr.ts
-function sanitizeBranchPart(value) {
-	return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "tap-update";
-}
-function derivePackageNameFromOutputPath(outputPath) {
-	return sanitizeBranchPart((outputPath.split("/").pop() ?? outputPath).replace(/\.[^.]+$/, ""));
-}
-function buildBranchName(outputPath, releaseTag, runId) {
-	return `brew-up/${derivePackageNameFromOutputPath(outputPath)}/${sanitizeBranchPart(releaseTag)}-${sanitizeBranchPart(runId)}`;
-}
-function buildPrPublishPlan(config, options) {
-	const branchName = buildBranchName(config.outputPath, options.releaseTag, options.runId);
-	return {
-		branchName,
-		branchRef: `refs/heads/${branchName}`,
-		pullRequestTitle: buildCommitMessage(config.outputPath, options.releaseTag)
-	};
-}
-async function publishPr(client, config, renderedOutput, options) {
-	const plan = buildPrPublishPlan(config, options);
-	try {
-		const branchResponse = await client.rest.repos.getBranch({
-			owner: config.targetRepo.owner,
-			repo: config.targetRepo.name,
-			branch: config.targetBranch
-		});
-		await client.rest.git.createRef({
-			owner: config.targetRepo.owner,
-			repo: config.targetRepo.name,
-			ref: plan.branchRef,
-			sha: branchResponse.data.commit.sha
-		});
-		const commitResponse = await client.rest.repos.createOrUpdateFileContents(buildFileWriteRequest(config, plan.branchName, renderedOutput, options));
-		const prResponse = await client.rest.pulls.create({
-			owner: config.targetRepo.owner,
-			repo: config.targetRepo.name,
-			base: config.targetBranch,
-			head: plan.branchName,
-			title: plan.pullRequestTitle
-		});
-		const commitSha = commitResponse.data.commit?.sha;
-		if (!commitSha) throw new BrewUpError("TARGET_REPO_WRITE_FAILED", "Missing commit SHA from target repository write response.");
-		return {
-			commitSha,
-			pullRequestNumber: prResponse.data.number,
-			pullRequestUrl: prResponse.data.html_url,
-			pullRequestNodeId: prResponse.data.node_id,
-			branchName: plan.branchName
-		};
-	} catch (error) {
-		throw new BrewUpError("PULL_REQUEST_CREATE_FAILED", `Failed to publish pull request to ${config.targetRepo.fullName}:${config.outputPath}.`, error instanceof Error ? error.message : void 0);
 	}
 }
 //#endregion
@@ -20498,6 +20420,105 @@ mustache.Scanner = Scanner;
 mustache.Context = Context;
 mustache.Writer = Writer;
 //#endregion
+//#region src/target/publish-shared.ts
+const PLACEHOLDER_PATTERN$1 = /\{\{\{?\s*([a-zA-Z0-9_.]+)\s*\}\}?\}/g;
+function hasPath$1(target, path) {
+	const keys = path.split(".");
+	let current = target;
+	for (const key of keys) {
+		if (current === null || current === void 0 || typeof current !== "object" || !(key in current)) return false;
+		current = current[key];
+	}
+	return true;
+}
+function replaceMissingPlaceholdersWithUnknown(template, context) {
+	return template.replaceAll(PLACEHOLDER_PATTERN$1, (fullMatch, variableName) => {
+		return hasPath$1(context, variableName) ? fullMatch : "UNKNOWN";
+	});
+}
+function buildPublishMessage(publishMessageTemplate, variables) {
+	const template = replaceMissingPlaceholdersWithUnknown(publishMessageTemplate, variables);
+	return mustache.render(template, variables, void 0, { escape: (value) => String(value) });
+}
+function buildFileWriteRequest(config, branch, renderedOutput, options) {
+	return {
+		owner: config.targetRepo.owner,
+		repo: config.targetRepo.name,
+		path: config.outputPath,
+		branch,
+		message: buildPublishMessage(config.publishMessageTemplate, options.messageVariables),
+		content: Buffer.from(renderedOutput, "utf8").toString("base64"),
+		sha: options.currentSha,
+		committer: config.commitAuthor,
+		author: config.commitAuthor
+	};
+}
+//#endregion
+//#region src/target/publish-direct.ts
+async function publishDirect(client, config, renderedOutput, options) {
+	try {
+		const commitSha = (await client.rest.repos.createOrUpdateFileContents(buildFileWriteRequest(config, config.targetBranch, renderedOutput, options))).data.commit?.sha;
+		if (!commitSha) throw new BrewUpError("TARGET_REPO_WRITE_FAILED", "Missing commit SHA from target repository write response.");
+		return { commitSha };
+	} catch (error) {
+		throw new BrewUpError("TARGET_REPO_WRITE_FAILED", `Failed to publish output file to ${config.targetRepo.fullName}:${config.outputPath}.`, error instanceof Error ? error.message : void 0);
+	}
+}
+//#endregion
+//#region src/target/publish-pr.ts
+function sanitizeBranchPart(value) {
+	return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "tap-update";
+}
+function derivePackageNameFromOutputPath(outputPath) {
+	return sanitizeBranchPart((outputPath.split("/").pop() ?? outputPath).replace(/\.[^.]+$/, ""));
+}
+function buildBranchName(outputPath, releaseTag, runId) {
+	return `brew-up/${derivePackageNameFromOutputPath(outputPath)}/${sanitizeBranchPart(releaseTag)}-${sanitizeBranchPart(runId)}`;
+}
+function buildPrPublishPlan(config, options) {
+	const branchName = buildBranchName(config.outputPath, options.releaseTag, options.runId);
+	return {
+		branchName,
+		branchRef: `refs/heads/${branchName}`,
+		pullRequestTitle: buildPublishMessage(config.publishMessageTemplate, options.messageVariables)
+	};
+}
+async function publishPr(client, config, renderedOutput, options) {
+	const plan = buildPrPublishPlan(config, options);
+	try {
+		const branchResponse = await client.rest.repos.getBranch({
+			owner: config.targetRepo.owner,
+			repo: config.targetRepo.name,
+			branch: config.targetBranch
+		});
+		await client.rest.git.createRef({
+			owner: config.targetRepo.owner,
+			repo: config.targetRepo.name,
+			ref: plan.branchRef,
+			sha: branchResponse.data.commit.sha
+		});
+		const commitResponse = await client.rest.repos.createOrUpdateFileContents(buildFileWriteRequest(config, plan.branchName, renderedOutput, options));
+		const prResponse = await client.rest.pulls.create({
+			owner: config.targetRepo.owner,
+			repo: config.targetRepo.name,
+			base: config.targetBranch,
+			head: plan.branchName,
+			title: plan.pullRequestTitle
+		});
+		const commitSha = commitResponse.data.commit?.sha;
+		if (!commitSha) throw new BrewUpError("TARGET_REPO_WRITE_FAILED", "Missing commit SHA from target repository write response.");
+		return {
+			commitSha,
+			pullRequestNumber: prResponse.data.number,
+			pullRequestUrl: prResponse.data.html_url,
+			pullRequestNodeId: prResponse.data.node_id,
+			branchName: plan.branchName
+		};
+	} catch (error) {
+		throw new BrewUpError("PULL_REQUEST_CREATE_FAILED", `Failed to publish pull request to ${config.targetRepo.fullName}:${config.outputPath}.`, error instanceof Error ? error.message : void 0);
+	}
+}
+//#endregion
 //#region src/template/render.ts
 const PLACEHOLDER_PATTERN = /\{\{\{?\s*([a-zA-Z0-9_.]+)\s*\}\}?\}/g;
 function hasPath(target, path) {
@@ -20640,7 +20661,8 @@ async function run() {
 		if (config.publishMode === "direct") {
 			const published = await publishDirect(targetOctokit, config, renderedOutput, {
 				currentSha: change.currentSha,
-				releaseTag: release.tagName
+				releaseTag: release.tagName,
+				messageVariables: variables
 			});
 			publishOutcome = { commitSha: published.commitSha };
 			info(`Published output commit: ${published.commitSha}`);
@@ -20648,7 +20670,8 @@ async function run() {
 			const published = await publishPr(targetOctokit, config, renderedOutput, {
 				currentSha: change.currentSha,
 				releaseTag: release.tagName,
-				runId: getRunId()
+				runId: getRunId(),
+				messageVariables: variables
 			});
 			publishOutcome = {
 				commitSha: published.commitSha,
