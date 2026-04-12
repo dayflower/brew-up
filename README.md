@@ -70,6 +70,7 @@ If you use a classic PAT:
 | `dry-run` | no | Resolve and render without mutation (`true`/`false`, default: `false`) |
 | `commit-author-name` | no | Optional commit author name (must be paired with email) |
 | `commit-author-email` | no | Optional commit author email (must be paired with name) |
+| `publish-message-template` | no | Optional Mustache template used for both commit message and PR title |
 
 ## Outputs
 
@@ -83,6 +84,22 @@ If you use a classic PAT:
 | `resolved-release-tag` | Resolved source release tag | Always |
 
 When `changed=false` and `only-if-changed=true`, commit- and PR-related outputs may be empty.
+
+## Publish Message Template
+
+`publish-message-template` customizes both the commit message and PR title.
+
+- Default (when omitted): `brew-up: update <output-path> for <tag_name>`
+- Engine: [Mustache](https://mustache.github.io/) with raw rendering (no HTML escaping)
+- Unknown variables are replaced with `UNKNOWN` (the action does not fail)
+
+Available variables for this template:
+
+- `version`
+- `tag_name`
+- `release_id`
+- `release_name`
+- `release_url`
 
 ## Template Syntax and Variables
 

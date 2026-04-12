@@ -18,6 +18,7 @@ function baseRawInputs(): RawInputs {
     dryRun: "false",
     commitAuthorName: "",
     commitAuthorEmail: "",
+    publishMessageTemplate: "",
   };
 }
 
@@ -66,5 +67,20 @@ describe("validateInputs", () => {
 
     const validated = validateInputs(raw);
     expect(validated.releaseId).toBe(42);
+  });
+
+  it("uses default publish message template when input is empty", () => {
+    const validated = validateInputs(baseRawInputs());
+    expect(validated.publishMessageTemplate).toBe(
+      "brew-up: update Casks/myapp.rb for {{tag_name}}",
+    );
+  });
+
+  it("accepts custom publish message template", () => {
+    const raw = baseRawInputs();
+    raw.publishMessageTemplate = "release {{tag_name}}";
+
+    const validated = validateInputs(raw);
+    expect(validated.publishMessageTemplate).toBe("release {{tag_name}}");
   });
 });

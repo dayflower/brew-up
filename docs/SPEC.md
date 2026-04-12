@@ -301,6 +301,27 @@ If both are provided, the action uses them for the commit author identity.
 
 If they are not provided, the action does not override the commit author explicitly and may rely on the authenticated Git configuration or token-associated defaults in the workflow environment.
 
+## Publish Message Template
+
+### Input
+
+- `publish-message-template` (optional)
+
+### Behavior
+
+- One template is used for both commit message and pull request title.
+- If omitted, the default message is equivalent to `brew-up: update <output-path> for <tag_name>`.
+- Rendering uses Mustache with raw output (no HTML escaping).
+- Unknown variables in this template are replaced with `UNKNOWN`; rendering does not fail.
+
+### Available Variables
+
+- `version`
+- `tag_name`
+- `release_id`
+- `release_name`
+- `release_url`
+
 ## Validation Rules
 
 The action must fail in the following cases:
