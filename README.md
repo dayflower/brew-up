@@ -1,6 +1,22 @@
 # brew-up
 
-`brew-up` is a JavaScript GitHub Action that renders one file from a template in the source repository and publishes it to the target tap repository.
+`brew-up` is a GitHub Action that generates and updates Homebrew tap files from GitHub Release assets.
+
+Other options for Homebrew tap updates include:
+
+- [`Homebrew/actions/bump-packages`](https://github.com/Homebrew/actions/tree/main/bump-packages)
+- [`mislav/bump-homebrew-formula-action`](https://github.com/mislav/bump-homebrew-formula-action)
+- [`dawidd6/action-homebrew-bump-formula`](https://github.com/dawidd6/action-homebrew-bump-formula)
+- [`Justintime50/homebrew-releaser`](https://github.com/Justintime50/homebrew-releaser)
+
+Compared with those tools, `brew-up` focuses on the following strengths:
+
+- **Simple**: It uses a lightweight design that does not depend on running the `brew` CLI.
+  - Keeps runner requirements low and makes it easy to run on standard environments such as `ubuntu-latest`.
+- **Flexible**: You manage the tap output from your own template, so you can freely express the Formula or Cask you want.
+  - Keeps your workflow from being constrained by the editable surface of bump-oriented update tools.
+- **Consistent**: Instead of only patching pre-existing tap files, you keep the tap-file source template in your application repository.
+  - Keeps distribution logic reviewable and traceable in the same change flow as your app code.
 
 It resolves one release, maps release assets, injects SHA-256 checksums, and supports three publish modes: `direct`, `pr`, and `pr-auto-merge`.
 
