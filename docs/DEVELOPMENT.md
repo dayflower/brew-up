@@ -13,8 +13,12 @@ npm run release:prep -- patch
 ```
 
 Replace `patch` with `minor` or `major` when needed.
-This helper checks `main`, ensures the working tree is clean, verifies `main` matches `origin/main`, bumps version, creates `release/vX.Y.Z`, and commits the bump.
-Push and PR creation are still manual.
+This helper checks `main`, ensures the working tree is clean, verifies `main` matches `origin/main`, bumps version, creates `release/vX.Y.Z`, commits the bump, pushes the branch, creates a pull request to `main`, and enables GitHub native auto-merge with merge commit mode.
+
+Before using this helper, ensure:
+
+- `gh` CLI is installed and authenticated (`gh auth status`)
+- repository settings allow both auto-merge and merge commits
 
 If you need to run the steps manually:
 
@@ -33,8 +37,8 @@ If you need to run the steps manually:
 
    Replace `patch` with `minor` or `major` when needed.
 
-3. Create `release/vX.Y.Z`, commit the version bump, and open a pull request to `main`.
-4. Merge the pull request after CI passes.
+3. Create `release/vX.Y.Z`, commit the version bump, push the branch, open a pull request to `main`, and enable auto-merge in merge commit mode.
+4. Wait for the pull request to be merged by auto-merge after checks pass.
 5. If `update-bundled-action` opens a PR for `dist/main.mjs`, merge that PR too.
 6. Sync local `main` to the final merged state:
 
