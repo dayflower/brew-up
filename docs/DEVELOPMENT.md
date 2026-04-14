@@ -76,8 +76,6 @@ The repository includes `.github/workflows/e2e-smoke.yml` for manual end-to-end 
 - Ensure the source repository has both:
   - a template file (for example `.github/homebrew/brew-up-smoke.rb.mustache`)
   - a GitHub Release that already contains assets matching your `asset-map` patterns
-- Store the target tap repository token in a source-repository secret.
-  - Default secret name: `BREW_UP_TARGET_REPO_TOKEN`
-  - Override secret name with the `target-repo-token-secret-name` input
+- Store the target tap repository token in the `BREW_UP_TARGET_REPO_TOKEN` source-repository secret.
 
 Use `dry-run=true` first, then run with `dry-run=false` when ready.

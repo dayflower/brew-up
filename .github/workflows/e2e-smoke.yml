@@ -36,11 +36,6 @@ on:
         required: true
         default: "main"
         type: string
-      target-repo-token-secret-name:
-        description: "Name of the source-repository secret that stores the target repository token"
-        required: true
-        default: "BREW_UP_TARGET_REPO_TOKEN"
-        type: string
       publish-mode:
         description: "Publish mode: direct, pr, or pr-auto-merge"
         required: true
@@ -78,11 +73,10 @@ jobs:
 
       - name: Validate target repository token secret
         env:
-          TARGET_REPO_TOKEN: ${{ secrets[inputs.target-repo-token-secret-name] }}
-          TARGET_REPO_TOKEN_SECRET_NAME: ${{ inputs.target-repo-token-secret-name }}
+          TARGET_REPO_TOKEN: ${{ secrets.BREW_UP_TARGET_REPO_TOKEN }}
         run: |
           if [ -z "$TARGET_REPO_TOKEN" ]; then
-            echo "::error::Secret '$TARGET_REPO_TOKEN_SECRET_NAME' is not set or is empty in the source repository."
+            echo "::error::Secret 'BREW_UP_TARGET_REPO_TOKEN' is not set or is empty in the source repository."
             exit 1
           fi
 
@@ -99,7 +93,7 @@ jobs:
           checksum-asset: ${{ inputs.checksum-asset }}
           target-repo: ${{ inputs.target-repo }}
           target-branch: ${{ inputs.target-branch }}
-          target-repo-token: ${{ secrets[inputs.target-repo-token-secret-name] }}
+          target-repo-token: ${{ secrets.BREW_UP_TARGET_REPO_TOKEN }}
           publish-mode: ${{ inputs.publish-mode }}
           only-if-changed: ${{ inputs.only-if-changed }}
           dry-run: ${{ inputs.dry-run }}
