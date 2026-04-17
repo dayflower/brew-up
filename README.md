@@ -2,6 +2,8 @@
 
 `brew-up` is a GitHub Action that generates and updates Homebrew tap files from GitHub Release assets.
 
+Note: You must provide and maintain your own tap template file (via `template-path`); `brew-up` does not generate a Formula/Cask template for you.
+
 Other options for Homebrew tap updates include:
 
 - [`Homebrew/actions/bump-packages`](https://github.com/Homebrew/actions/tree/main/bump-packages)
@@ -23,6 +25,7 @@ It resolves one release, maps release assets, injects SHA-256 checksums, and sup
 ## Requirements
 
 - GitHub Actions workflow runs in the source repository after release assets are available.
+- A tap template file exists in the source repository and is passed via `template-path`.
 - `target-repo-token` can write to the target tap repository (see [Token Setup](#token-setup)).
 - `GITHUB_TOKEN` is available for reading release metadata in the source repository.
 
