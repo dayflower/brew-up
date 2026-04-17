@@ -1,11 +1,21 @@
 import { BrewUpError } from "../errors.js";
 import { parseAssetMap } from "../github/assets.js";
-import type { PublishMode, RawInputs, ValidatedInputs } from "../types.js";
+import type {
+  AutoMergeMethod,
+  PublishMode,
+  RawInputs,
+  ValidatedInputs,
+} from "../types.js";
 
 const VALID_PUBLISH_MODES = new Set<PublishMode>([
   "direct",
   "pr",
   "pr-auto-merge",
+]);
+const VALID_AUTO_MERGE_METHODS = new Set<AutoMergeMethod>([
+  "merge",
+  "squash",
+  "rebase",
 ]);
 const TARGET_REPO_PATTERN = /^[^/\s]+\/[^/\s]+$/;
 
@@ -42,6 +52,22 @@ function parseReleaseId(releaseId: string): number | undefined {
   }
 
   return parsed;
+}
+
+function parseAutoMergeMethod(raw: RawInputs): AutoMergeMethod {
+  if (raw.publishMode !== "pr-auto-merge") {
+    return "merge";
+  }
+
+  if (VALID_AUTO_MERGE_METHODS.has(raw.autoMergeMethod as AutoMergeMethod)) {
+    return raw.autoMergeMethod as AutoMergeMethod;
+  }
+
+  throw new BrewUpError(
+    "INVALID_INPUT",
+    `Input auto-merge-method has unsupported value: "${raw.autoMergeMethod}".`,
+    "Allowed values are merge, squash, rebase.",
+  );
 }
 
 export function validateInputs(raw: RawInputs): ValidatedInputs {
@@ -85,6 +111,7 @@ export function validateInputs(raw: RawInputs): ValidatedInputs {
     targetBranch: raw.targetBranch,
     targetRepoToken: raw.targetRepoToken,
     publishMode: raw.publishMode as PublishMode,
+    autoMergeMethod: parseAutoMergeMethod(raw),
     onlyIfChanged: parseStrictBoolean("only-if-changed", raw.onlyIfChanged),
     dryRun: parseStrictBoolean("dry-run", raw.dryRun),
     commitAuthor: hasAuthorName

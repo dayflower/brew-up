@@ -31,6 +31,10 @@ inputs:
   publish-mode:
     description: 'Publish mode: direct, pr, or pr-auto-merge'
     required: true
+  auto-merge-method:
+    description: 'Auto-merge method for pr-auto-merge: merge, squash, or rebase'
+    required: false
+    default: 'merge'
   only-if-changed:
     description: 'Skip publish when output is unchanged'
     required: false

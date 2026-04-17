@@ -214,6 +214,7 @@ The final segment should include `github.run_id` to reduce collision risk and im
 ### Input
 
 - `publish-mode`
+- `auto-merge-method` (optional: `merge` | `squash` | `rebase`, default `merge`)
 
 Allowed values:
 
@@ -240,6 +241,13 @@ Allowed values:
 - Enable GitHub auto-merge for that pull request
 
 This mode relies on GitHub's native auto-merge capability rather than attempting immediate merge through the API.
+`auto-merge-method` controls the requested merge method in this mode:
+
+- `merge` -> `MERGE`
+- `squash` -> `SQUASH`
+- `rebase` -> `REBASE`
+
+When `publish-mode` is not `pr-auto-merge`, `auto-merge-method` is ignored.
 
 ## Auto-Merge Policy
 
@@ -333,6 +341,7 @@ The action must fail in the following cases:
 - a checksum required for a resolved artifact cannot be found in the checksum asset
 - template rendering leaves unresolved variables
 - `publish-mode` is invalid
+- `auto-merge-method` is invalid when `publish-mode=pr-auto-merge`
 - tap repository cannot be accessed or updated as required
 - auto-merge cannot be enabled in `pr-auto-merge` mode
 

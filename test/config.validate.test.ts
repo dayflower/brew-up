@@ -14,6 +14,7 @@ function baseRawInputs(): RawInputs {
     targetBranch: "main",
     targetRepoToken: "token",
     publishMode: "direct",
+    autoMergeMethod: "merge",
     onlyIfChanged: "true",
     dryRun: "false",
     commitAuthorName: "",
@@ -27,6 +28,7 @@ describe("validateInputs", () => {
     const validated = validateInputs(baseRawInputs());
 
     expect(validated.publishMode).toBe("direct");
+    expect(validated.autoMergeMethod).toBe("merge");
     expect(validated.onlyIfChanged).toBe(true);
     expect(validated.dryRun).toBe(false);
     expect(validated.targetRepo.owner).toBe("owner");
@@ -82,5 +84,31 @@ describe("validateInputs", () => {
 
     const validated = validateInputs(raw);
     expect(validated.publishMessageTemplate).toBe("release {{tag_name}}");
+  });
+
+  it("accepts auto-merge-method when publish-mode is pr-auto-merge", () => {
+    const raw = baseRawInputs();
+    raw.publishMode = "pr-auto-merge";
+    raw.autoMergeMethod = "squash";
+
+    const validated = validateInputs(raw);
+    expect(validated.autoMergeMethod).toBe("squash");
+  });
+
+  it("rejects invalid auto-merge-method when publish-mode is pr-auto-merge", () => {
+    const raw = baseRawInputs();
+    raw.publishMode = "pr-auto-merge";
+    raw.autoMergeMethod = "invalid";
+
+    expect(() => validateInputs(raw)).toThrow(/auto-merge-method/);
+  });
+
+  it("ignores auto-merge-method when publish-mode is not pr-auto-merge", () => {
+    const raw = baseRawInputs();
+    raw.publishMode = "direct";
+    raw.autoMergeMethod = "invalid";
+
+    const validated = validateInputs(raw);
+    expect(validated.autoMergeMethod).toBe("merge");
   });
 });

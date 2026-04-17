@@ -22,6 +22,7 @@ export function readInputs(
     targetBranch: readInput(getInput, "target-branch", true),
     targetRepoToken: readInput(getInput, "target-repo-token", true),
     publishMode: readInput(getInput, "publish-mode", true),
+    autoMergeMethod: readInput(getInput, "auto-merge-method") || "merge",
     onlyIfChanged: readInput(getInput, "only-if-changed") || "true",
     dryRun: readInput(getInput, "dry-run") || "false",
     commitAuthorName: readInput(getInput, "commit-author-name"),

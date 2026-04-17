@@ -204,8 +204,15 @@ export async function run(): Promise<void> {
       };
 
       if (config.publishMode === "pr-auto-merge") {
-        await enableAutoMerge(targetOctokit, published.pullRequestNodeId);
+        await enableAutoMerge(
+          targetOctokit,
+          published.pullRequestNodeId,
+          config.autoMergeMethod,
+        );
         publishOutcome.autoMergeEnabled = true;
+        core.info(
+          `Enabled pull request auto-merge method: ${config.autoMergeMethod}`,
+        );
       }
 
       core.info(`Published output commit: ${published.commitSha}`);

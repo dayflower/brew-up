@@ -94,6 +94,7 @@ interface Fixtures {
     targetBranch: string;
     targetRepoToken: string;
     publishMode: "direct" | "pr" | "pr-auto-merge";
+    autoMergeMethod: "merge" | "squash" | "rebase";
     onlyIfChanged: boolean;
     dryRun: boolean;
     publishMessageTemplate: string;
@@ -114,6 +115,7 @@ function setupFixtures(
     targetBranch: "main",
     targetRepoToken: "target-token",
     publishMode: "direct",
+    autoMergeMethod: "merge",
     onlyIfChanged: "true",
     dryRun: "false",
     commitAuthorName: "",
@@ -132,6 +134,7 @@ function setupFixtures(
     targetBranch: "main",
     targetRepoToken: "target-token",
     publishMode: "direct",
+    autoMergeMethod: "merge",
     onlyIfChanged: true,
     dryRun: false,
     publishMessageTemplate: "brew-up: update Casks/app.rb for {{tag_name}}",
@@ -383,6 +386,7 @@ describe("run milestone 4", () => {
       expect(autoMergeMock.enableAutoMerge).toHaveBeenCalledWith(
         expect.anything(),
         "PR_node_12",
+        "merge",
       );
       expect(outputResultMock.setPublishOutputs).toHaveBeenCalledWith(
         expect.objectContaining({

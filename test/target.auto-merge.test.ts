@@ -19,15 +19,41 @@ describe("enableAutoMerge", () => {
       },
     });
 
-    await expect(enableAutoMerge(client, "PR_node_7")).resolves.toBeUndefined();
+    await expect(
+      enableAutoMerge(client, "PR_node_7", "merge"),
+    ).resolves.toBeUndefined();
     expect(client.graphql).toHaveBeenCalledWith(
       expect.stringContaining("enablePullRequestAutoMerge"),
-      { pullRequestId: "PR_node_7" },
+      { pullRequestId: "PR_node_7", mergeMethod: "MERGE" },
     );
     expect(client.graphql).toHaveBeenCalledWith(
-      expect.stringContaining("mergeMethod: MERGE"),
-      { pullRequestId: "PR_node_7" },
+      expect.stringContaining("mergeMethod: $mergeMethod"),
+      { pullRequestId: "PR_node_7", mergeMethod: "MERGE" },
     );
+  });
+
+  it("maps squash and rebase methods", async () => {
+    const client = makeClient();
+    client.graphql.mockResolvedValue({
+      enablePullRequestAutoMerge: {
+        pullRequest: {
+          number: 8,
+          autoMergeRequest: { enabledAt: "2026-04-08T00:00:00Z" },
+        },
+      },
+    });
+
+    await enableAutoMerge(client, "PR_node_8", "squash");
+    await enableAutoMerge(client, "PR_node_8", "rebase");
+
+    expect(client.graphql).toHaveBeenNthCalledWith(1, expect.any(String), {
+      pullRequestId: "PR_node_8",
+      mergeMethod: "SQUASH",
+    });
+    expect(client.graphql).toHaveBeenNthCalledWith(2, expect.any(String), {
+      pullRequestId: "PR_node_8",
+      mergeMethod: "REBASE",
+    });
   });
 
   it("fails when auto-merge response is missing", async () => {
@@ -41,7 +67,7 @@ describe("enableAutoMerge", () => {
       },
     });
 
-    await expect(enableAutoMerge(client, "PR_node_7")).rejects.toThrow(
+    await expect(enableAutoMerge(client, "PR_node_7", "merge")).rejects.toThrow(
       /Failed to enable pull request auto-merge/,
     );
   });
@@ -50,7 +76,7 @@ describe("enableAutoMerge", () => {
     const client = makeClient();
     client.graphql.mockRejectedValue(new Error("forbidden"));
 
-    await expect(enableAutoMerge(client, "PR_node_7")).rejects.toThrow(
+    await expect(enableAutoMerge(client, "PR_node_7", "merge")).rejects.toThrow(
       /Failed to enable pull request auto-merge/,
     );
   });
