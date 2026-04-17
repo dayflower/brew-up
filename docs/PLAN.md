@@ -66,6 +66,7 @@ Keep side effects inside GitHub/repository modules; keep business logic pure whe
 - `target-branch` (required)
 - `target-repo-token` (required)
 - `publish-mode` (required: `direct` | `pr` | `pr-auto-merge`)
+- `auto-merge-method` (optional: `merge` | `squash` | `rebase`; default `merge`; used only for `pr-auto-merge`)
 - `only-if-changed` (optional, default `true`)
 - `dry-run` (optional, default `false`)
 - `commit-author-name` (optional)
@@ -75,6 +76,7 @@ Keep side effects inside GitHub/repository modules; keep business logic pure whe
 ### 3.2 Validation rules
 
 - reject invalid `publish-mode`
+- reject invalid `auto-merge-method` only when `publish-mode=pr-auto-merge`
 - reject missing required inputs
 - validate `target-repo` format `owner/name`
 - validate `asset-map` parseability and non-empty keys/values

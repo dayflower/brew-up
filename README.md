@@ -26,7 +26,7 @@ It resolves one release, maps release assets, injects SHA-256 checksums, and sup
 - `target-repo-token` can write to the target tap repository (see [Token Setup](#token-setup)).
 - `GITHUB_TOKEN` is available for reading release metadata in the source repository.
 
-For `pr-auto-merge`, the target repository must allow auto-merge and merge commits (see [Auto-merge requirements](#auto-merge-requirements)).
+For `pr-auto-merge`, the target repository must allow auto-merge and the selected merge method (see [Auto-merge requirements](#auto-merge-requirements)).
 
 ## Token Setup
 
@@ -82,6 +82,7 @@ If you use a classic PAT:
 | `target-branch` | yes | Target branch in the target tap repository |
 | `target-repo-token` | yes | Token used to write the target tap repository |
 | `publish-mode` | yes | `direct`, `pr`, or `pr-auto-merge` |
+| `auto-merge-method` | no | Auto-merge method for `pr-auto-merge`: `merge`, `squash`, or `rebase` (default: `merge`; ignored for other publish modes) |
 | `only-if-changed` | no | Skip publish when output is unchanged (`true`/`false`, default: `true`) |
 | `dry-run` | no | Resolve and render without mutation (`true`/`false`, default: `false`) |
 | `commit-author-name` | no | Optional commit author name (must be paired with email) |
@@ -311,11 +312,17 @@ jobs:
           target-branch: main
           target-repo-token: ${{ secrets.TAP_REPO_TOKEN }}
           publish-mode: pr-auto-merge
+          auto-merge-method: squash
 ```
 
 ## Auto-merge requirements
 
-`publish-mode: pr-auto-merge` creates a pull request, then enables GitHub native auto-merge with merge method `MERGE`.
+`publish-mode: pr-auto-merge` creates a pull request, then enables GitHub native auto-merge with method derived from `auto-merge-method`.
+Mapping:
+
+- `merge` -> `MERGE`
+- `squash` -> `SQUASH`
+- `rebase` -> `REBASE`
 
 GitHub documentation:
 
@@ -325,7 +332,7 @@ GitHub documentation:
 Confirm all of the following in the target repository:
 
 - Auto-merge is enabled in repository settings.
-- Merge commits are allowed (because this action requests `MERGE` method).
+- The selected merge method is allowed in repository settings.
 - The identity behind `target-repo-token` has write access.
 - Branch protection and required checks are configured as needed.
 

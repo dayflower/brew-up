@@ -1,4 +1,5 @@
 export type PublishMode = "direct" | "pr" | "pr-auto-merge";
+export type AutoMergeMethod = "merge" | "squash" | "rebase";
 
 export interface RawInputs {
   releaseId: string;
@@ -11,6 +12,7 @@ export interface RawInputs {
   targetBranch: string;
   targetRepoToken: string;
   publishMode: string;
+  autoMergeMethod: string;
   onlyIfChanged: string;
   dryRun: string;
   commitAuthorName: string;
@@ -38,6 +40,7 @@ export interface ValidatedInputs {
   targetBranch: string;
   targetRepoToken: string;
   publishMode: PublishMode;
+  autoMergeMethod: AutoMergeMethod;
   onlyIfChanged: boolean;
   dryRun: boolean;
   commitAuthor?: {

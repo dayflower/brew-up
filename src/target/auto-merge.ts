@@ -1,4 +1,5 @@
 import { BrewUpError } from "../errors.js";
+import type { AutoMergeMethod } from "../types.js";
 
 interface AutoMergeClient {
   graphql<T>(query: string, variables: Record<string, unknown>): Promise<T>;
@@ -16,8 +17,8 @@ interface EnableAutoMergeResponse {
 }
 
 const ENABLE_AUTO_MERGE_MUTATION = `
-mutation EnableAutoMerge($pullRequestId: ID!) {
-  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: MERGE }) {
+mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: $mergeMethod }) {
     pullRequest {
       number
       autoMergeRequest {
@@ -28,15 +29,29 @@ mutation EnableAutoMerge($pullRequestId: ID!) {
 }
 `;
 
+function toGraphqlMergeMethod(
+  method: AutoMergeMethod,
+): "MERGE" | "SQUASH" | "REBASE" {
+  if (method === "merge") {
+    return "MERGE";
+  }
+  if (method === "squash") {
+    return "SQUASH";
+  }
+  return "REBASE";
+}
+
 export async function enableAutoMerge(
   client: AutoMergeClient,
   pullRequestNodeId: string,
+  method: AutoMergeMethod,
 ): Promise<void> {
   try {
     const result = await client.graphql<EnableAutoMergeResponse>(
       ENABLE_AUTO_MERGE_MUTATION,
       {
         pullRequestId: pullRequestNodeId,
+        mergeMethod: toGraphqlMergeMethod(method),
       },
     );
 
