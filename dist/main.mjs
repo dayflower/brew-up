@@ -19550,6 +19550,7 @@ function readInputs(getInput) {
 		targetBranch: readInput(getInput, "target-branch", true),
 		targetRepoToken: readInput(getInput, "target-repo-token", true),
 		publishMode: readInput(getInput, "publish-mode", true),
+		autoMergeMethod: readInput(getInput, "auto-merge-method") || "merge",
 		onlyIfChanged: readInput(getInput, "only-if-changed") || "true",
 		dryRun: readInput(getInput, "dry-run") || "false",
 		commitAuthorName: readInput(getInput, "commit-author-name"),
@@ -19631,6 +19632,11 @@ const VALID_PUBLISH_MODES = new Set([
 	"pr",
 	"pr-auto-merge"
 ]);
+const VALID_AUTO_MERGE_METHODS = new Set([
+	"merge",
+	"squash",
+	"rebase"
+]);
 const TARGET_REPO_PATTERN = /^[^/\s]+\/[^/\s]+$/;
 function defaultPublishMessageTemplate(outputPath) {
 	return `brew-up: update ${outputPath} for {{tag_name}}`;
@@ -19645,6 +19651,11 @@ function parseReleaseId(releaseId) {
 	const parsed = Number(releaseId);
 	if (!Number.isInteger(parsed) || parsed <= 0) throw new BrewUpError("INVALID_INPUT", "Input release-id must be a positive integer.");
 	return parsed;
+}
+function parseAutoMergeMethod(raw) {
+	if (raw.publishMode !== "pr-auto-merge") return "merge";
+	if (VALID_AUTO_MERGE_METHODS.has(raw.autoMergeMethod)) return raw.autoMergeMethod;
+	throw new BrewUpError("INVALID_INPUT", `Input auto-merge-method has unsupported value: "${raw.autoMergeMethod}".`, "Allowed values are merge, squash, rebase.");
 }
 function validateInputs(raw) {
 	if (!VALID_PUBLISH_MODES.has(raw.publishMode)) throw new BrewUpError("UNSUPPORTED_MODE", `Input publish-mode has unsupported value: "${raw.publishMode}".`, "Allowed values are direct, pr, pr-auto-merge.");
@@ -19667,6 +19678,7 @@ function validateInputs(raw) {
 		targetBranch: raw.targetBranch,
 		targetRepoToken: raw.targetRepoToken,
 		publishMode: raw.publishMode,
+		autoMergeMethod: parseAutoMergeMethod(raw),
 		onlyIfChanged: parseStrictBoolean("only-if-changed", raw.onlyIfChanged),
 		dryRun: parseStrictBoolean("dry-run", raw.dryRun),
 		commitAuthor: hasAuthorName ? {
@@ -19793,8 +19805,8 @@ async function writeWorkflowSummary(input) {
 //#endregion
 //#region src/target/auto-merge.ts
 const ENABLE_AUTO_MERGE_MUTATION = `
-mutation EnableAutoMerge($pullRequestId: ID!) {
-  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: MERGE }) {
+mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) {
+  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: $mergeMethod }) {
     pullRequest {
       number
       autoMergeRequest {
@@ -19804,9 +19816,17 @@ mutation EnableAutoMerge($pullRequestId: ID!) {
   }
 }
 `;
-async function enableAutoMerge(client, pullRequestNodeId) {
+function toGraphqlMergeMethod(method) {
+	if (method === "merge") return "MERGE";
+	if (method === "squash") return "SQUASH";
+	return "REBASE";
+}
+async function enableAutoMerge(client, pullRequestNodeId, method) {
 	try {
-		if (!(await client.graphql(ENABLE_AUTO_MERGE_MUTATION, { pullRequestId: pullRequestNodeId })).enablePullRequestAutoMerge?.pullRequest?.autoMergeRequest) throw new BrewUpError("AUTO_MERGE_ENABLE_FAILED", "Failed to enable pull request auto-merge.");
+		if (!(await client.graphql(ENABLE_AUTO_MERGE_MUTATION, {
+			pullRequestId: pullRequestNodeId,
+			mergeMethod: toGraphqlMergeMethod(method)
+		})).enablePullRequestAutoMerge?.pullRequest?.autoMergeRequest) throw new BrewUpError("AUTO_MERGE_ENABLE_FAILED", "Failed to enable pull request auto-merge.");
 	} catch (error) {
 		if (error instanceof BrewUpError) throw error;
 		throw new BrewUpError("AUTO_MERGE_ENABLE_FAILED", "Failed to enable pull request auto-merge.", error instanceof Error ? error.message : void 0);
@@ -20680,8 +20700,9 @@ async function run() {
 				autoMergeEnabled: false
 			};
 			if (config.publishMode === "pr-auto-merge") {
-				await enableAutoMerge(targetOctokit, published.pullRequestNodeId);
+				await enableAutoMerge(targetOctokit, published.pullRequestNodeId, config.autoMergeMethod);
 				publishOutcome.autoMergeEnabled = true;
+				info(`Enabled pull request auto-merge method: ${config.autoMergeMethod}`);
 			}
 			info(`Published output commit: ${published.commitSha}`);
 			info(`Published pull request: #${published.pullRequestNumber} ${published.pullRequestUrl}`);
