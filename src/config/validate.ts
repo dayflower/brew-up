@@ -2,6 +2,7 @@ import { BrewUpError } from "../errors.js";
 import { parseAssetMap } from "../github/assets.js";
 import type {
   AutoMergeMethod,
+  PublishAttribution,
   PublishMode,
   RawInputs,
   ValidatedInputs,
@@ -17,10 +18,16 @@ const VALID_AUTO_MERGE_METHODS = new Set<AutoMergeMethod>([
   "squash",
   "rebase",
 ]);
+const VALID_PUBLISH_ATTRIBUTIONS = new Set<PublishAttribution>([
+  "off",
+  "commit",
+  "pr",
+  "both",
+]);
 const TARGET_REPO_PATTERN = /^[^/\s]+\/[^/\s]+$/;
 
-function defaultPublishMessageTemplate(outputPath: string): string {
-  return `brew-up: update ${outputPath} for {{tag_name}}`;
+function defaultPublishTitleTemplate(): string {
+  return "brew-up: update {{output_path}} for {{tag_name}}";
 }
 
 function parseStrictBoolean(name: string, value: string): boolean {
@@ -68,6 +75,32 @@ function parseAutoMergeMethod(raw: RawInputs): AutoMergeMethod {
     `Input auto-merge-method has unsupported value: "${raw.autoMergeMethod}".`,
     "Allowed values are merge, squash, rebase.",
   );
+}
+
+function parsePublishAttribution(raw: RawInputs): PublishAttribution {
+  const value = raw.publishAttribution || "both";
+  if (VALID_PUBLISH_ATTRIBUTIONS.has(value as PublishAttribution)) {
+    return value as PublishAttribution;
+  }
+
+  throw new BrewUpError(
+    "INVALID_INPUT",
+    `Input publish-attribution has unsupported value: "${value}".`,
+    "Allowed values are off, commit, pr, both.",
+  );
+}
+
+function validateTitleTemplate(raw: RawInputs): string {
+  const titleTemplate =
+    raw.publishTitleTemplate || defaultPublishTitleTemplate();
+  if (/[\r\n]/.test(titleTemplate)) {
+    throw new BrewUpError(
+      "INVALID_INPUT",
+      "Input publish-title-template must be a single line.",
+    );
+  }
+
+  return titleTemplate;
 }
 
 export function validateInputs(raw: RawInputs): ValidatedInputs {
@@ -120,8 +153,8 @@ export function validateInputs(raw: RawInputs): ValidatedInputs {
           email: raw.commitAuthorEmail,
         }
       : undefined,
-    publishMessageTemplate:
-      raw.publishMessageTemplate ||
-      defaultPublishMessageTemplate(raw.outputPath),
+    publishTitleTemplate: validateTitleTemplate(raw),
+    publishBodyTemplate: raw.publishBodyTemplate,
+    publishAttribution: parsePublishAttribution(raw),
   };
 }

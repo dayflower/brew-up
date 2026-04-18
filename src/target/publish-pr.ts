@@ -2,8 +2,9 @@ import { BrewUpError } from "../errors.js";
 import type { PublishPrResult, ValidatedInputs } from "../types.js";
 import {
   buildFileWriteRequest,
-  buildPublishMessage,
-  type PublishMessageVariables,
+  buildPullRequestBody,
+  buildRenderedPublishMessage,
+  type PublishTemplateVariables,
 } from "./publish-shared.js";
 
 interface PullRequestResponse {
@@ -47,6 +48,7 @@ interface PullRequestWriter {
         base: string;
         head: string;
         title: string;
+        body?: string;
       }): Promise<{ data: PullRequestResponse }>;
     };
   };
@@ -80,14 +82,21 @@ interface PrPublishPlan {
   branchName: string;
   branchRef: string;
   pullRequestTitle: string;
+  pullRequestBody?: string;
 }
 
 function buildPrPublishPlan(
-  config: Pick<ValidatedInputs, "outputPath" | "publishMessageTemplate">,
+  config: Pick<
+    ValidatedInputs,
+    | "outputPath"
+    | "publishTitleTemplate"
+    | "publishBodyTemplate"
+    | "publishAttribution"
+  >,
   options: {
     releaseTag: string;
     runId: string;
-    messageVariables: PublishMessageVariables;
+    messageVariables: PublishTemplateVariables;
   },
 ): PrPublishPlan {
   const branchName = buildBranchName(
@@ -95,13 +104,15 @@ function buildPrPublishPlan(
     options.releaseTag,
     options.runId,
   );
+  const renderedMessage = buildRenderedPublishMessage(
+    config,
+    options.messageVariables,
+  );
   return {
     branchName,
     branchRef: `refs/heads/${branchName}`,
-    pullRequestTitle: buildPublishMessage(
-      config.publishMessageTemplate,
-      options.messageVariables,
-    ),
+    pullRequestTitle: renderedMessage.title,
+    pullRequestBody: buildPullRequestBody(config, options.messageVariables),
   };
 }
 
@@ -113,14 +124,16 @@ export async function publishPr(
     | "targetRepo"
     | "targetBranch"
     | "commitAuthor"
-    | "publishMessageTemplate"
+    | "publishTitleTemplate"
+    | "publishBodyTemplate"
+    | "publishAttribution"
   >,
   renderedOutput: string,
   options: {
     currentSha?: string;
     releaseTag: string;
     runId: string;
-    messageVariables: PublishMessageVariables;
+    messageVariables: PublishTemplateVariables;
   },
 ): Promise<PublishPrResult> {
   const plan = buildPrPublishPlan(config, options);
@@ -149,6 +162,7 @@ export async function publishPr(
       base: config.targetBranch,
       head: plan.branchName,
       title: plan.pullRequestTitle,
+      body: plan.pullRequestBody,
     });
 
     const commitSha = commitResponse.data.commit?.sha;

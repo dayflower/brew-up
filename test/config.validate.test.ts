@@ -19,7 +19,9 @@ function baseRawInputs(): RawInputs {
     dryRun: "false",
     commitAuthorName: "",
     commitAuthorEmail: "",
-    publishMessageTemplate: "",
+    publishTitleTemplate: "",
+    publishBodyTemplate: "",
+    publishAttribution: "",
   };
 }
 
@@ -71,19 +73,46 @@ describe("validateInputs", () => {
     expect(validated.releaseId).toBe(42);
   });
 
-  it("uses default publish message template when input is empty", () => {
+  it("uses default publish title template when input is empty", () => {
     const validated = validateInputs(baseRawInputs());
-    expect(validated.publishMessageTemplate).toBe(
-      "brew-up: update Casks/myapp.rb for {{tag_name}}",
+    expect(validated.publishTitleTemplate).toBe(
+      "brew-up: update {{output_path}} for {{tag_name}}",
     );
   });
 
-  it("accepts custom publish message template", () => {
+  it("accepts custom publish title template", () => {
     const raw = baseRawInputs();
-    raw.publishMessageTemplate = "release {{tag_name}}";
+    raw.publishTitleTemplate = "release {{tag_name}}";
 
     const validated = validateInputs(raw);
-    expect(validated.publishMessageTemplate).toBe("release {{tag_name}}");
+    expect(validated.publishTitleTemplate).toBe("release {{tag_name}}");
+  });
+
+  it("accepts custom publish body template", () => {
+    const raw = baseRawInputs();
+    raw.publishBodyTemplate = "From {{release_url}}";
+
+    const validated = validateInputs(raw);
+    expect(validated.publishBodyTemplate).toBe("From {{release_url}}");
+  });
+
+  it("uses default publish attribution when input is empty", () => {
+    const validated = validateInputs(baseRawInputs());
+    expect(validated.publishAttribution).toBe("both");
+  });
+
+  it("rejects multi-line publish title template", () => {
+    const raw = baseRawInputs();
+    raw.publishTitleTemplate = "line1\nline2";
+
+    expect(() => validateInputs(raw)).toThrow(/single line/);
+  });
+
+  it("rejects invalid publish-attribution", () => {
+    const raw = baseRawInputs();
+    raw.publishAttribution = "invalid";
+
+    expect(() => validateInputs(raw)).toThrow(/publish-attribution/);
   });
 
   it("accepts auto-merge-method when publish-mode is pr-auto-merge", () => {

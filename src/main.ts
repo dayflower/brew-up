@@ -112,6 +112,10 @@ export async function run(): Promise<void> {
       release_name: release.name,
       release_url: release.url,
     };
+    const publishMessageVariables = {
+      ...variables,
+      output_path: config.outputPath,
+    };
 
     const resolved = resolveArtifacts(
       config.assetMapEntries,
@@ -183,7 +187,7 @@ export async function run(): Promise<void> {
         {
           currentSha: change.currentSha,
           releaseTag: release.tagName,
-          messageVariables: variables,
+          messageVariables: publishMessageVariables,
         },
       );
       publishOutcome = { commitSha: published.commitSha };
@@ -193,7 +197,7 @@ export async function run(): Promise<void> {
         currentSha: change.currentSha,
         releaseTag: release.tagName,
         runId: getRunId(),
-        messageVariables: variables,
+        messageVariables: publishMessageVariables,
       });
 
       publishOutcome = {

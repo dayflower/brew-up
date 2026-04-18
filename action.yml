@@ -49,9 +49,16 @@ inputs:
   commit-author-email:
     description: 'Optional commit author email (must pair with name)'
     required: false
-  publish-message-template:
-    description: 'Optional Mustache template used for commit message and PR title'
+  publish-title-template:
+    description: 'Optional Mustache template used for commit title and PR title'
     required: false
+  publish-body-template:
+    description: 'Optional Mustache template used for commit body and PR description'
+    required: false
+  publish-attribution:
+    description: 'Attribution target: off, commit, pr, or both'
+    required: false
+    default: 'both'
 runs:
   using: 'node24'
   main: 'dist/main.mjs'
