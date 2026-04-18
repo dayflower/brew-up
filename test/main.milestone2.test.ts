@@ -97,7 +97,9 @@ interface Fixtures {
     autoMergeMethod: "merge" | "squash" | "rebase";
     onlyIfChanged: boolean;
     dryRun: boolean;
-    publishMessageTemplate: string;
+    publishTitleTemplate: string;
+    publishBodyTemplate: string;
+    publishAttribution: "off" | "commit" | "pr" | "both";
   };
 }
 
@@ -120,7 +122,9 @@ function setupFixtures(
     dryRun: "false",
     commitAuthorName: "",
     commitAuthorEmail: "",
-    publishMessageTemplate: "",
+    publishTitleTemplate: "",
+    publishBodyTemplate: "",
+    publishAttribution: "",
   };
 
   const validatedInputs: Fixtures["validatedInputs"] = {
@@ -137,7 +141,9 @@ function setupFixtures(
     autoMergeMethod: "merge",
     onlyIfChanged: true,
     dryRun: false,
-    publishMessageTemplate: "brew-up: update Casks/app.rb for {{tag_name}}",
+    publishTitleTemplate: "brew-up: update {{output_path}} for {{tag_name}}",
+    publishBodyTemplate: "",
+    publishAttribution: "both",
     ...overrides,
   };
 
@@ -267,6 +273,7 @@ describe("run milestone 4", () => {
           releaseTag: "v1.2.3",
           messageVariables: {
             version: "1.2.3",
+            output_path: "Casks/app.rb",
             tag_name: "v1.2.3",
             release_id: "123",
             release_name: "Release",
@@ -308,6 +315,7 @@ describe("run milestone 4", () => {
           releaseTag: "v1.2.3",
           messageVariables: {
             version: "1.2.3",
+            output_path: "Casks/app.rb",
             tag_name: "v1.2.3",
             release_id: "123",
             release_name: "Release",
@@ -349,6 +357,7 @@ describe("run milestone 4", () => {
           runId: "777",
           messageVariables: {
             version: "1.2.3",
+            output_path: "Casks/app.rb",
             tag_name: "v1.2.3",
             release_id: "123",
             release_name: "Release",

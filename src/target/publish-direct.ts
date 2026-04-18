@@ -2,7 +2,7 @@ import { BrewUpError } from "../errors.js";
 import type { PublishDirectResult, ValidatedInputs } from "../types.js";
 import {
   buildFileWriteRequest,
-  type PublishMessageVariables,
+  type PublishTemplateVariables,
 } from "./publish-shared.js";
 
 interface CreateOrUpdateFileResponse {
@@ -29,13 +29,15 @@ export async function publishDirect(
     | "targetRepo"
     | "targetBranch"
     | "commitAuthor"
-    | "publishMessageTemplate"
+    | "publishTitleTemplate"
+    | "publishBodyTemplate"
+    | "publishAttribution"
   >,
   renderedOutput: string,
   options: {
     currentSha?: string;
     releaseTag: string;
-    messageVariables: PublishMessageVariables;
+    messageVariables: PublishTemplateVariables;
   },
 ): Promise<PublishDirectResult> {
   try {

@@ -27,6 +27,8 @@ export function readInputs(
     dryRun: readInput(getInput, "dry-run") || "false",
     commitAuthorName: readInput(getInput, "commit-author-name"),
     commitAuthorEmail: readInput(getInput, "commit-author-email"),
-    publishMessageTemplate: readInput(getInput, "publish-message-template"),
+    publishTitleTemplate: readInput(getInput, "publish-title-template"),
+    publishBodyTemplate: readInput(getInput, "publish-body-template"),
+    publishAttribution: readInput(getInput, "publish-attribution"),
   };
 }

@@ -1,5 +1,6 @@
 export type PublishMode = "direct" | "pr" | "pr-auto-merge";
 export type AutoMergeMethod = "merge" | "squash" | "rebase";
+export type PublishAttribution = "off" | "commit" | "pr" | "both";
 
 export interface RawInputs {
   releaseId: string;
@@ -17,7 +18,9 @@ export interface RawInputs {
   dryRun: string;
   commitAuthorName: string;
   commitAuthorEmail: string;
-  publishMessageTemplate: string;
+  publishTitleTemplate: string;
+  publishBodyTemplate: string;
+  publishAttribution: string;
 }
 
 export interface AssetMapEntry {
@@ -47,7 +50,9 @@ export interface ValidatedInputs {
     name: string;
     email: string;
   };
-  publishMessageTemplate: string;
+  publishTitleTemplate: string;
+  publishBodyTemplate: string;
+  publishAttribution: PublishAttribution;
 }
 
 export interface SourceReleaseContext {
