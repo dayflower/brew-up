@@ -5,7 +5,7 @@ import os, { EOL } from "os";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import { constants, existsSync, promises, readFileSync } from "fs";
-import * as path$1 from "path";
+import "path";
 import * as events from "events";
 import { createHash } from "node:crypto";
 import "child_process";
@@ -30,7 +30,7 @@ var __copyProps = (to, from, except, desc) => {
 	}
 	return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule || !__hasOwnProp.call(mod, "default") ? __defProp(target, "default", {
 	value: mod,
 	enumerable: true
 }) : target, mod));
@@ -1845,7 +1845,7 @@ var require_dispatcher_base = /* @__PURE__ */ __commonJSMin(((exports, module) =
 		get webSocketOptions() {
 			return {
 				maxFragments: this[kWebSocketOptions].maxFragments ?? 131072,
-				maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 128 * 1024 * 1024
+				maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 134217728
 			};
 		}
 		get destroyed() {
@@ -1897,7 +1897,7 @@ var require_dispatcher_base = /* @__PURE__ */ __commonJSMin(((exports, module) =
 			}
 			if (callback === void 0) return new Promise((resolve, reject) => {
 				this.destroy(err, (err, data) => {
-					return err ? reject(err) : resolve(data);
+					return err ? /* istanbul ignore next: should never error */ reject(err) : resolve(data);
 				});
 			});
 			if (typeof callback !== "function") throw new InvalidArgumentError("invalid callback");
@@ -2367,7 +2367,7 @@ var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				assert$24(!httpSocket, "httpSocket can only be sent on TLS update");
 				port = port || 80;
 				socket = net$1.connect({
-					highWaterMark: 64 * 1024,
+					highWaterMark: 65536,
 					...options,
 					localAddress,
 					port,
@@ -3846,10 +3846,7 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				case "strict-origin-when-cross-origin":
 					if (request.origin && urlHasHttpsScheme(request.origin) && !urlHasHttpsScheme(requestCurrentURL(request))) serializedOrigin = null;
 					break;
-				case "same-origin":
-					if (!sameOrigin(request, requestCurrentURL(request))) serializedOrigin = null;
-					break;
-				default:
+				case "same-origin": if (!sameOrigin(request, requestCurrentURL(request))) serializedOrigin = null;
 			}
 			request.headersList.append("origin", serializedOrigin, true);
 		}
@@ -4131,9 +4128,7 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					case "value":
 						result = value;
 						break;
-					case "key+value":
-						result = [key, value];
-						break;
+					case "key+value": result = [key, value];
 				}
 				return {
 					value: result,
@@ -6707,7 +6702,8 @@ var require_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			this.once("connect", cb);
 		}
 		[kDispatch](opts, handler) {
-			const request = new Request(opts.origin || this[kUrl].origin, opts, handler);
+			const origin = opts.origin || this[kUrl].origin;
+			const request = new Request(origin, opts, handler);
 			this[kQueue].push(request);
 			if (this[kResuming]) {} else if (util.bodyLength(request.body) == null && util.isIterable(request.body)) {
 				this[kResuming] = 1;
@@ -6918,7 +6914,7 @@ var require_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 //#region node_modules/undici/lib/dispatcher/fixed-queue.js
 var require_fixed_queue = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const kSize = 2048;
-	const kMask = kSize - 1;
+	const kMask = 2047;
 	var FixedCircularBuffer = class {
 		constructor() {
 			this.bottom = 0;
@@ -7703,7 +7699,7 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 			this.retryOpts = {
 				retry: retryFn ?? RetryHandler[kRetryHandlerDefaultRetry],
 				retryAfter: retryAfter ?? true,
-				maxTimeout: maxTimeout ?? 30 * 1e3,
+				maxTimeout: maxTimeout ?? 3e4,
 				minTimeout: minTimeout ?? 500,
 				timeoutFactor: timeoutFactor ?? 2,
 				maxRetries: maxRetries ?? 5,
@@ -7947,7 +7943,7 @@ var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const kContentLength = Symbol("kContentLength");
 	const noop = () => {};
 	var BodyReadable = class extends Readable$2 {
-		constructor({ resume, abort, contentType = "", contentLength, highWaterMark = 64 * 1024 }) {
+		constructor({ resume, abort, contentType = "", contentLength, highWaterMark = 65536 }) {
 			super({
 				autoDestroy: true,
 				read: resume,
@@ -8026,7 +8022,7 @@ var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			return this[kBody];
 		}
 		async dump(opts) {
-			let limit = Number.isFinite(opts?.limit) ? opts.limit : 128 * 1024;
+			let limit = Number.isFinite(opts?.limit) ? opts.limit : 131072;
 			const signal = opts?.signal;
 			if (signal != null && (typeof signal !== "object" || !("aborted" in signal))) throw new InvalidArgumentError("signal must be an AbortSignal");
 			signal?.throwIfAborted();
@@ -8165,7 +8161,7 @@ var require_util$5 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const assert$13 = __require("node:assert");
 	const { ResponseStatusCodeError } = require_errors();
 	const { chunksDecode } = require_readable();
-	const CHUNK_LIMIT = 128 * 1024;
+	const CHUNK_LIMIT = 131072;
 	async function getResolveErrorBodyCallback({ callback, body, contentType, statusCode, statusMessage, headers }) {
 		assert$13(body);
 		let chunks = [];
@@ -9005,7 +9001,10 @@ var require_mock_utils = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		matchedMockDispatches = matchedMockDispatches.filter(({ body }) => typeof body !== "undefined" ? matchValue(body, key.body) : true);
 		if (matchedMockDispatches.length === 0) throw new MockNotMatchedError(`Mock dispatch not matched for body '${key.body}' on path '${resolvedPath}'`);
 		matchedMockDispatches = matchedMockDispatches.filter((mockDispatch) => matchHeaders(mockDispatch, key.headers));
-		if (matchedMockDispatches.length === 0) throw new MockNotMatchedError(`Mock dispatch not matched for headers '${typeof key.headers === "object" ? JSON.stringify(key.headers) : key.headers}' on path '${resolvedPath}'`);
+		if (matchedMockDispatches.length === 0) {
+			const headers = typeof key.headers === "object" ? JSON.stringify(key.headers) : key.headers;
+			throw new MockNotMatchedError(`Mock dispatch not matched for headers '${headers}' on path '${resolvedPath}'`);
+		}
 		return matchedMockDispatches[0];
 	}
 	function addMockDispatch(mockDispatches, key, data) {
@@ -9661,7 +9660,7 @@ var require_dump = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	const { InvalidArgumentError, RequestAbortedError } = require_errors();
 	const DecoratorHandler = require_decorator_handler();
 	var DumpHandler = class extends DecoratorHandler {
-		#maxSize = 1024 * 1024;
+		#maxSize = 1048576;
 		#abort = null;
 		#dumped = false;
 		#aborted = false;
@@ -9711,7 +9710,7 @@ var require_dump = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			this.#handler.onComplete(trailers);
 		}
 	};
-	function createDumpInterceptor({ maxSize: defaultMaxSize } = { maxSize: 1024 * 1024 }) {
+	function createDumpInterceptor({ maxSize: defaultMaxSize } = { maxSize: 1048576 }) {
 		return (dispatch) => {
 			return function Intercept(opts, handler) {
 				const { dumpMaxSize = defaultMaxSize } = opts;
@@ -9882,9 +9881,7 @@ var require_dns = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					this.#handler.onError(err);
 					return;
 				case "ENOTFOUND": this.#state.deleteRecord(this.#origin);
-				default:
-					this.#handler.onError(err);
-					break;
+				default: this.#handler.onError(err);
 			}
 		}
 	};
@@ -10324,7 +10321,8 @@ var require_response = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		static json(data, init = {}) {
 			webidl.argumentLengthCheck(arguments, 1, "Response.json");
 			if (init !== null) init = webidl.converters.ResponseInit(init);
-			const body = extractBody(textEncoder.encode(serializeJavascriptValueToJSONString(data)));
+			const bytes = textEncoder.encode(serializeJavascriptValueToJSONString(data));
+			const body = extractBody(bytes);
 			const responseObject = fromInnerResponse(makeResponse({}), "response");
 			initializeResponse(responseObject, init, {
 				body: body[0],
@@ -11293,7 +11291,8 @@ var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			taskDestination = request.client.globalObject;
 			crossOriginIsolatedCapability = request.client.crossOriginIsolatedCapability;
 		}
-		const timingInfo = createOpaqueTimingInfo({ startTime: coarsenedSharedCurrentTime(crossOriginIsolatedCapability) });
+		const currentTime = coarsenedSharedCurrentTime(crossOriginIsolatedCapability);
+		const timingInfo = createOpaqueTimingInfo({ startTime: currentTime });
 		const fetchParams = {
 			controller: new Fetch(dispatcher),
 			request,
@@ -11401,7 +11400,8 @@ var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					response.headersList.set("content-type", type, true);
 				} else {
 					response.rangeRequested = true;
-					const rangeValue = simpleRangeHeaderValue(request.headersList.get("range", true), true);
+					const rangeHeader = request.headersList.get("range", true);
+					const rangeValue = simpleRangeHeaderValue(rangeHeader, true);
 					if (rangeValue === "failure") return Promise.resolve(makeNetworkError("failed to fetch the data URL"));
 					let { rangeStartValue: rangeStart, rangeEndValue: rangeEnd } = rangeValue;
 					if (rangeStart === null) {
@@ -11424,7 +11424,8 @@ var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				return Promise.resolve(response);
 			}
 			case "data:": {
-				const dataURLStruct = dataURLProcessor(requestCurrentURL(request));
+				const currentURL = requestCurrentURL(request);
+				const dataURLStruct = dataURLProcessor(currentURL);
 				if (dataURLStruct === "failure") return Promise.resolve(makeNetworkError("failed to fetch the data URL"));
 				const mimeType = serializeAMimeType(dataURLStruct.mimeType);
 				return Promise.resolve(makeResponse({
@@ -12783,8 +12784,10 @@ var require_cache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			});
 			const clonedResponse = cloneResponse(innerResponse);
 			const bodyReadPromise = createDeferredPromise();
-			if (innerResponse.body != null) readAllBytes(innerResponse.body.stream.getReader()).then(bodyReadPromise.resolve, bodyReadPromise.reject);
-			else bodyReadPromise.resolve(void 0);
+			if (innerResponse.body != null) {
+				const reader = innerResponse.body.stream.getReader();
+				readAllBytes(reader).then(bodyReadPromise.resolve, bodyReadPromise.reject);
+			} else bodyReadPromise.resolve(void 0);
 			/** @type {CacheBatchOperation[]} */
 			const operations = [];
 			/** @type {CacheBatchOperation} */
@@ -13076,7 +13079,10 @@ var require_cachestorage = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			request = webidl.converters.RequestInfo(request);
 			options = webidl.converters.MultiCacheQueryOptions(options);
 			if (options.cacheName != null) {
-				if (this.#caches.has(options.cacheName)) return await new Cache(kConstruct, this.#caches.get(options.cacheName)).match(request, options);
+				if (this.#caches.has(options.cacheName)) {
+					const cacheList = this.#caches.get(options.cacheName);
+					return await new Cache(kConstruct, cacheList).match(request, options);
+				}
 			} else for (const cacheList of this.#caches.values()) {
 				const response = await new Cache(kConstruct, cacheList).match(request, options);
 				if (response !== void 0) return response;
@@ -13104,7 +13110,10 @@ var require_cachestorage = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const prefix = "CacheStorage.open";
 			webidl.argumentLengthCheck(arguments, 1, prefix);
 			cacheName = webidl.converters.DOMString(cacheName, prefix, "cacheName");
-			if (this.#caches.has(cacheName)) return new Cache(kConstruct, this.#caches.get(cacheName));
+			if (this.#caches.has(cacheName)) {
+				const cache = this.#caches.get(cacheName);
+				return new Cache(kConstruct, cache);
+			}
 			const cache = [];
 			this.#caches.set(cacheName, cache);
 			return new Cache(kConstruct, cache);
@@ -15273,7 +15282,6 @@ var require_eventsource_stream = /* @__PURE__ */ __commonJSMin(((exports, module
 				default:
 					if (this.buffer[0] === BOM[0] && this.buffer[1] === BOM[1] && this.buffer[2] === BOM[2]) this.buffer = this.buffer.subarray(3);
 					this.checkBOM = false;
-					break;
 			}
 			while (this.pos < this.buffer.length) {
 				if (this.eventEndCheck) {
@@ -15339,9 +15347,7 @@ var require_eventsource_stream = /* @__PURE__ */ __commonJSMin(((exports, module
 				case "id":
 					if (isValidLastEventId(value)) event[field] = value;
 					break;
-				case "event":
-					if (value.length > 0) event[field] = value;
-					break;
+				case "event": if (value.length > 0) event[field] = value;
 			}
 		}
 		/**
@@ -16134,188 +16140,9 @@ var Summary = class {
 	}
 };
 const summary = new Summary();
-//#endregion
-//#region node_modules/@actions/io/lib/io-util.js
-var __awaiter$6 = function(thisArg, _arguments, P, generator) {
-	function adopt(value) {
-		return value instanceof P ? value : new P(function(resolve) {
-			resolve(value);
-		});
-	}
-	return new (P || (P = Promise))(function(resolve, reject) {
-		function fulfilled(value) {
-			try {
-				step(generator.next(value));
-			} catch (e) {
-				reject(e);
-			}
-		}
-		function rejected(value) {
-			try {
-				step(generator["throw"](value));
-			} catch (e) {
-				reject(e);
-			}
-		}
-		function step(result) {
-			result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-		}
-		step((generator = generator.apply(thisArg, _arguments || [])).next());
-	});
-};
 const { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs.promises;
-const IS_WINDOWS$1 = process.platform === "win32";
+process.platform;
 fs.constants.O_RDONLY;
-/**
-* On OSX/Linux, true if path starts with '/'. On Windows, true for paths like:
-* \, \hello, \\hello\share, C:, and C:\hello (and corresponding alternate separator cases).
-*/
-function isRooted(p) {
-	p = normalizeSeparators(p);
-	if (!p) throw new Error("isRooted() parameter \"p\" cannot be empty");
-	if (IS_WINDOWS$1) return p.startsWith("\\") || /^[A-Z]:/i.test(p);
-	return p.startsWith("/");
-}
-/**
-* Best effort attempt to determine whether a file exists and is executable.
-* @param filePath    file path to check
-* @param extensions  additional file extensions to try
-* @return if file exists and is executable, returns the file path. otherwise empty string.
-*/
-function tryGetExecutablePath(filePath, extensions) {
-	return __awaiter$6(this, void 0, void 0, function* () {
-		let stats = void 0;
-		try {
-			stats = yield stat(filePath);
-		} catch (err) {
-			if (err.code !== "ENOENT") console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
-		}
-		if (stats && stats.isFile()) {
-			if (IS_WINDOWS$1) {
-				const upperExt = path$1.extname(filePath).toUpperCase();
-				if (extensions.some((validExt) => validExt.toUpperCase() === upperExt)) return filePath;
-			} else if (isUnixExecutable(stats)) return filePath;
-		}
-		const originalFilePath = filePath;
-		for (const extension of extensions) {
-			filePath = originalFilePath + extension;
-			stats = void 0;
-			try {
-				stats = yield stat(filePath);
-			} catch (err) {
-				if (err.code !== "ENOENT") console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
-			}
-			if (stats && stats.isFile()) {
-				if (IS_WINDOWS$1) {
-					try {
-						const directory = path$1.dirname(filePath);
-						const upperName = path$1.basename(filePath).toUpperCase();
-						for (const actualName of yield readdir(directory)) if (upperName === actualName.toUpperCase()) {
-							filePath = path$1.join(directory, actualName);
-							break;
-						}
-					} catch (err) {
-						console.log(`Unexpected error attempting to determine the actual case of the file '${filePath}': ${err}`);
-					}
-					return filePath;
-				} else if (isUnixExecutable(stats)) return filePath;
-			}
-		}
-		return "";
-	});
-}
-function normalizeSeparators(p) {
-	p = p || "";
-	if (IS_WINDOWS$1) {
-		p = p.replace(/\//g, "\\");
-		return p.replace(/\\\\+/g, "\\");
-	}
-	return p.replace(/\/\/+/g, "/");
-}
-function isUnixExecutable(stats) {
-	return (stats.mode & 1) > 0 || (stats.mode & 8) > 0 && process.getgid !== void 0 && stats.gid === process.getgid() || (stats.mode & 64) > 0 && process.getuid !== void 0 && stats.uid === process.getuid();
-}
-//#endregion
-//#region node_modules/@actions/io/lib/io.js
-var __awaiter$5 = function(thisArg, _arguments, P, generator) {
-	function adopt(value) {
-		return value instanceof P ? value : new P(function(resolve) {
-			resolve(value);
-		});
-	}
-	return new (P || (P = Promise))(function(resolve, reject) {
-		function fulfilled(value) {
-			try {
-				step(generator.next(value));
-			} catch (e) {
-				reject(e);
-			}
-		}
-		function rejected(value) {
-			try {
-				step(generator["throw"](value));
-			} catch (e) {
-				reject(e);
-			}
-		}
-		function step(result) {
-			result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-		}
-		step((generator = generator.apply(thisArg, _arguments || [])).next());
-	});
-};
-/**
-* Returns path of a tool had the tool actually been invoked.  Resolves via paths.
-* If you check and the tool does not exist, it will throw.
-*
-* @param     tool              name of the tool
-* @param     check             whether to check if tool exists
-* @returns   Promise<string>   path to tool
-*/
-function which(tool, check) {
-	return __awaiter$5(this, void 0, void 0, function* () {
-		if (!tool) throw new Error("parameter 'tool' is required");
-		if (check) {
-			const result = yield which(tool, false);
-			if (!result) if (IS_WINDOWS$1) throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also verify the file has a valid extension for an executable file.`);
-			else throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also check the file mode to verify the file is executable.`);
-			return result;
-		}
-		const matches = yield findInPath(tool);
-		if (matches && matches.length > 0) return matches[0];
-		return "";
-	});
-}
-/**
-* Returns a list of all occurrences of the given tool on the system path.
-*
-* @returns   Promise<string[]>  the paths of the tool
-*/
-function findInPath(tool) {
-	return __awaiter$5(this, void 0, void 0, function* () {
-		if (!tool) throw new Error("parameter 'tool' is required");
-		const extensions = [];
-		if (IS_WINDOWS$1 && process.env["PATHEXT"]) {
-			for (const extension of process.env["PATHEXT"].split(path$1.delimiter)) if (extension) extensions.push(extension);
-		}
-		if (isRooted(tool)) {
-			const filePath = yield tryGetExecutablePath(tool, extensions);
-			if (filePath) return [filePath];
-			return [];
-		}
-		if (tool.includes(path$1.sep)) return [];
-		const directories = [];
-		if (process.env.PATH) {
-			for (const p of process.env.PATH.split(path$1.delimiter)) if (p) directories.push(p);
-		}
-		const matches = [];
-		for (const directory of directories) {
-			const filePath = yield tryGetExecutablePath(path$1.join(directory, tool), extensions);
-			if (filePath) matches.push(filePath);
-		}
-		return matches;
-	});
-}
 process.platform;
 events.EventEmitter;
 events.EventEmitter;
@@ -16875,7 +16702,7 @@ var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((export
 			req.on("socket", (sock) => {
 				socket = sock;
 			});
-			req.setTimeout(this._socketTimeout || 3 * 6e4, () => {
+			req.setTimeout(this._socketTimeout || 18e4, () => {
 				if (socket) socket.end();
 				handleResult(/* @__PURE__ */ new Error(`Request timeout: ${info.options.path}`));
 			});
@@ -17695,14 +17522,15 @@ const noiseValueWithQuotes = /^"-?\d+n+"$/;
 const JSONParse = (text, reviver) => {
 	if (!text) return originalParse(text, reviver);
 	if (isContextSourceSupported()) return JSONParseV2(text, reviver);
-	return originalParse(text.replace(stringsOrLargeNumbers, (text, digits, fractional, exponential) => {
+	const serializedData = text.replace(stringsOrLargeNumbers, (text, digits, fractional, exponential) => {
 		const isString = text[0] === "\"";
 		if (isString && noiseValueWithQuotes.test(text)) return text.substring(0, text.length - 1) + "n\"";
 		const isFractionalOrExponential = fractional || exponential;
 		const isLessThanMaxSafeInt = digits && (digits.length < MAX_DIGITS || digits.length === MAX_DIGITS && digits <= MAX_INT);
 		if (isString || isFractionalOrExponential || isLessThanMaxSafeInt) return text;
 		return "\"" + text + "n\"";
-	}), (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
+	});
+	return originalParse(serializedData, (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
 };
 //#endregion
 //#region node_modules/@octokit/request-error/dist-src/index.js
